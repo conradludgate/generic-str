@@ -12,14 +12,26 @@
 //! ```
 #![feature(str_internals)]
 #![feature(vec_into_raw_parts)]
+#![feature(allocator_api)]
+#![feature(slice_range)]
+#![feature(slice_index_methods)]
+#![feature(slice_ptr_get)]
+#![feature(slice_ptr_len)]
+
+use std::alloc::{Global};
+
+use generic_vec::{HeapVec};
 
 
 pub mod string_base;
 pub mod chars;
 mod validation;
+mod traits;
+mod slice_index;
 
+#[allow(non_camel_case_types)]
 pub type str = string_base::StringBase<[u8]>;
-pub type String = string_base::StringBase<Vec<u8>>;
+pub type String<A = Global> = string_base::StringBase<HeapVec<u8, A>>;
 
 #[cfg(test)]
 mod tests {

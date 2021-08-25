@@ -1,3 +1,5 @@
+use crate::string_base::StringBase;
+
 #[inline]
 fn utf8_first_byte(byte: u8, width: u32) -> u32 {
     (byte & (0x7F >> width)) as u32
@@ -57,3 +59,16 @@ where
 const CONT_MASK: u8 = 0b0011_1111;
 /// Value of the tag bits (tag mask is !CONT_MASK) of a continuation byte.
 const TAG_CONT_U8: u8 = 0b1000_0000;
+
+// truncate `&StringBase<[u8]>` to length at most equal to `max`
+// return `true` if it were truncated, and the new str.
+pub(super) fn truncate_to_char_boundary(s: &StringBase<[u8]>, mut max: usize) -> (bool, &StringBase<[u8]>) {
+    if max >= s.len() {
+        (false, s)
+    } else {
+        while !s.is_char_boundary(max) {
+            max -= 1;
+        }
+        (true, &s[..max])
+    }
+}
