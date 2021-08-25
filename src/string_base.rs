@@ -256,9 +256,9 @@ impl<S: Storage<u8>> StringBase<GenericVec<u8, S>> {
     /// let mut s = String::from("foobar");
     /// let s_mut_str = s.as_mut_str();
     ///
-    /// //s_mut_str.make_ascii_uppercase();
+    /// s_mut_str.make_ascii_uppercase();
     ///
-    /// //assert_eq!(s_mut_str, "FOOBAR");
+    /// assert_eq!(s_mut_str, "FOOBAR");
     /// ```
     #[inline]
     pub fn as_mut_str(&mut self) -> &mut StringBase<[u8]> {
@@ -508,7 +508,6 @@ impl<S: Storage<u8>> StringBase<GenericVec<u8, S>> {
             self.insert_bytes(idx, string.as_bytes());
         }
     }
-
 }
 
 impl<S: StorageWithCapacity<u8>> StringBase<GenericVec<u8, S>> {
@@ -645,6 +644,50 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
         unsafe { std::mem::transmute(self.storage.as_ref()) }
     }
 
+    /// Converts a mutable string slice to a mutable byte slice.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure that the content of the slice is valid UTF-8
+    /// before the borrow ends and the underlying `str` is used.
+    ///
+    /// Use of a `str` whose contents are not valid UTF-8 is undefined behavior.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// # use cursed_strings::String;
+    /// let mut s = String::from("Hello");
+    /// let bytes = unsafe { s.as_bytes_mut() };
+    ///
+    /// assert_eq!(bytes, b"Hello");
+    /// ```
+    ///
+    /// Mutability:
+    ///
+    /// ```
+    /// # use cursed_strings::String;
+    /// let mut s = String::from("🗻∈🌏");
+    ///
+    /// unsafe {
+    ///     let bytes = s.as_bytes_mut();
+    ///
+    ///     bytes[0] = 0xF0;
+    ///     bytes[1] = 0x9F;
+    ///     bytes[2] = 0x8D;
+    ///     bytes[3] = 0x94;
+    /// }
+    ///
+    /// assert_eq!(s, "🍔∈🌏");
+    /// ```
+    #[inline(always)]
+    pub unsafe fn as_bytes_mut(&mut self) -> &mut [u8] where T: AsMut<[u8]> {
+        // SAFETY: const sound because we transmute two types with the same layout
+        std::mem::transmute(self.storage.as_mut())
+    }
+
     /// Converts a string slice to a raw pointer.
     ///
     /// As string slices are a slice of bytes, the raw pointer points to a
@@ -691,10 +734,10 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
     /// # Examples
     ///
     /// ```
-    /// # use cursed_strings::String;
+    /// # use cursed_strings::{str, String};
     /// let v = String::from("🗻∈🌏");
     ///
-    /// assert_eq!(Some("🗻"), v.get(0..4));
+    /// assert_eq!(v.get(0..4), Some(<&str>::from("🗻")));
     ///
     /// // indices not on UTF-8 sequence boundaries
     /// assert!(v.get(1..).is_none());
@@ -716,22 +759,22 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
     /// # Examples
     ///
     /// ```
-    /// # use cursed_strings::String;
+    /// # use cursed_strings::{str, String};
     /// let mut v = String::from("hello");
     /// // correct length
     /// assert!(v.get_mut(0..5).is_some());
     /// // out of bounds
     /// assert!(v.get_mut(..42).is_none());
-    /// assert_eq!(v.get_mut(0..2).map(|v| &*v), Some("he"));
+    /// assert_eq!(v.get_mut(0..2).map(|v| &*v), Some(<&str>::from("he")));
     ///
     /// assert_eq!(v, "hello");
     /// {
     ///     let s = v.get_mut(0..2);
     ///     let s = s.map(|s| {
-    ///         // s.make_ascii_uppercase();
+    ///         s.make_ascii_uppercase();
     ///         &*s
     ///     });
-    ///     assert_eq!(s, Some("HE"));
+    ///     assert_eq!(s, Some(<&str>::from("HE")));
     /// }
     /// assert_eq!(v, "HEllo");
     /// ```
@@ -862,6 +905,33 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
             front_offset: 0,
             iter: self.chars(),
         }
+    }
+
+    /// Converts this string to its ASCII upper case equivalent in-place.
+    ///
+    /// ASCII letters 'a' to 'z' are mapped to 'A' to 'Z',
+    /// but non-ASCII letters are unchanged.
+    ///
+    /// To return a new uppercased value without modifying the existing one, use
+    /// [`to_ascii_uppercase()`].
+    ///
+    /// [`to_ascii_uppercase()`]: #method.to_ascii_uppercase
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use cursed_strings::String;
+    /// let mut s = String::from("Grüße, Jürgen ❤");
+    ///
+    /// s.make_ascii_uppercase();
+    ///
+    /// assert_eq!(s, "GRüßE, JüRGEN ❤");
+    /// ```
+    #[inline]
+    pub fn make_ascii_uppercase(&mut self) where T: AsMut<[u8]> {
+        // SAFETY: safe because we transmute two types with the same layout.
+        let me = unsafe { self.as_bytes_mut() };
+        me.make_ascii_uppercase()
     }
 }
 
