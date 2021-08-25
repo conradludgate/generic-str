@@ -1,6 +1,6 @@
 use std::slice::SliceIndex;
 
-use crate::string_base::{StringBase, slice_error_fail};
+use crate::{slice_utf8::slice_error_fail, string_base::{StringBase}};
 
 /// Implements substring slicing with syntax `&self[..]` or `&mut self[..]`.
 ///

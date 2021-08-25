@@ -47,37 +47,6 @@
 <span id="47">47</span>
 <span id="48">48</span>
 <span id="49">49</span>
-<span id="50">50</span>
-<span id="51">51</span>
-<span id="52">52</span>
-<span id="53">53</span>
-<span id="54">54</span>
-<span id="55">55</span>
-<span id="56">56</span>
-<span id="57">57</span>
-<span id="58">58</span>
-<span id="59">59</span>
-<span id="60">60</span>
-<span id="61">61</span>
-<span id="62">62</span>
-<span id="63">63</span>
-<span id="64">64</span>
-<span id="65">65</span>
-<span id="66">66</span>
-<span id="67">67</span>
-<span id="68">68</span>
-<span id="69">69</span>
-<span id="70">70</span>
-<span id="71">71</span>
-<span id="72">72</span>
-<span id="73">73</span>
-<span id="74">74</span>
-<span id="75">75</span>
-<span id="76">76</span>
-<span id="77">77</span>
-<span id="78">78</span>
-<span id="79">79</span>
-<span id="80">80</span>
 </pre><pre class="rust"><code><span class="doccomment">//! The one and only string type in Rust</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ```</span>
@@ -100,48 +69,17 @@
 <span class="attribute">#![<span class="ident">feature</span>(<span class="ident">const_mut_refs</span>)]</span>
 <span class="attribute">#![<span class="ident">feature</span>(<span class="ident">const_fn_trait_bound</span>)]</span>
 
-<span class="kw">use</span> <span class="ident">std::alloc</span>::{<span class="ident">Global</span>};
-
-<span class="kw">use</span> <span class="ident">generic_vec</span>::{<span class="ident">ArrayVec</span>, <span class="ident">HeapVec</span>};
-
-
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">string_base</span>;
-<span class="kw">mod</span> <span class="ident">validation</span>;
-<span class="kw">mod</span> <span class="ident">traits</span>;
-<span class="kw">mod</span> <span class="ident">slice_index</span>;
 <span class="kw">mod</span> <span class="ident">convert</span>;
+<span class="kw">mod</span> <span class="ident">owned_utf8</span>;
+<span class="kw">mod</span> <span class="ident">slice_index</span>;
+<span class="kw">mod</span> <span class="ident">slice_utf8</span>;
+<span class="kw">mod</span> <span class="ident">string_base</span>;
+<span class="kw">mod</span> <span class="ident">traits</span>;
+<span class="kw">mod</span> <span class="ident">validation</span>;
 
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">convert</span>::<span class="kw-2">*</span>;
-
-<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">non_camel_case_types</span>)]</span>
-<span class="doccomment">/// Exactly the same as [`std::str`], except generic</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">str</span> <span class="op">=</span> <span class="ident">string_base::StringBase</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>;
-
-<span class="doccomment">/// Exactly the same as [`std::string::String`], except generic</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ```</span>
-<span class="doccomment">/// # use cursed_strings::String;</span>
-<span class="doccomment">/// let mut s = String::new();</span>
-<span class="doccomment">/// s.push_str(&quot;foobar&quot;.into());</span>
-<span class="doccomment">/// assert_eq!(s, &quot;foobar&quot;);</span>
-<span class="doccomment">/// ```</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">String</span><span class="op">&lt;</span><span class="ident">A</span> <span class="op">=</span> <span class="ident">Global</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">string_base::StringBase</span><span class="op">&lt;</span><span class="ident">HeapVec</span><span class="op">&lt;</span><span class="ident">u8</span>, <span class="ident">A</span><span class="op">&gt;</span><span class="op">&gt;</span>;
-
-<span class="doccomment">/// Same API as [`String`] but without any re-allocation. Can only hold up to `N` bytes</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ```</span>
-<span class="doccomment">/// # use cursed_strings::ArrayString;</span>
-<span class="doccomment">/// let mut s = ArrayString::&lt;8&gt;::new();</span>
-<span class="doccomment">/// assert_eq!(std::mem::size_of_val(&amp;s), 8 + 8); // 8 bytes of storage, 8 bytes for length</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// s.push_str(&quot;foo&quot;.into());</span>
-<span class="doccomment">/// let t = s.clone(); // cloning requires no heap allocations</span>
-<span class="doccomment">/// s.push_str(&quot;bar&quot;.into());</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// assert_eq!(t, &quot;foo&quot;);</span>
-<span class="doccomment">/// assert_eq!(s, &quot;foobar&quot;);</span>
-<span class="doccomment">/// ```</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ArrayString</span><span class="op">&lt;</span><span class="kw">const</span> <span class="ident">N</span>: <span class="ident">usize</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">string_base::StringBase</span><span class="op">&lt;</span><span class="ident">ArrayVec</span><span class="op">&lt;</span><span class="ident">u8</span>, <span class="ident">N</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">owned_utf8::FromUtf8Error</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">string_base</span>::<span class="kw-2">*</span>;
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {

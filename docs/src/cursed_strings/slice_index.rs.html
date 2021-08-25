@@ -358,7 +358,7 @@
 <span id="358">358</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::slice::SliceIndex</span>;
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::string_base</span>::{<span class="ident">StringBase</span>, <span class="ident">slice_error_fail</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">slice_utf8::slice_error_fail</span>, <span class="ident">string_base</span>::{<span class="ident">StringBase</span>}};
 
 <span class="doccomment">/// Implements substring slicing with syntax `&amp;self[..]` or `&amp;mut self[..]`.</span>
 <span class="doccomment">///</span>

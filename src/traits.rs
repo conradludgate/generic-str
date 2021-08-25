@@ -3,9 +3,9 @@ use generic_vec::{raw::Heap, HeapVec};
 use crate::string_base::StringBase;
 use std::{
     alloc::Allocator,
-    borrow::Borrow,
+    borrow::{Borrow, Cow},
     cmp::Ordering,
-    ops::{Index, IndexMut},
+    ops::{Add, AddAssign, Index, IndexMut},
     ptr::NonNull,
 };
 
@@ -199,5 +199,30 @@ where
 impl<S: ?Sized + Ord> Ord for StringBase<S> {
     fn cmp(&self, other: &StringBase<S>) -> Ordering {
         self.storage.cmp(&other.storage)
+    }
+}
+
+impl<'a> Add<&'a crate::str> for Cow<'a, crate::str> {
+    type Output = Cow<'a, crate::str>;
+
+    #[inline]
+    fn add(mut self, rhs: &'a crate::str) -> Self::Output {
+        self += rhs;
+        self
+    }
+}
+
+impl<'a> AddAssign<&'a crate::str> for Cow<'a, crate::str> {
+    fn add_assign(&mut self, rhs: &'a crate::str) {
+        if self.is_empty() {
+            *self = Cow::Borrowed(rhs)
+        } else if !rhs.is_empty() {
+            if let Cow::Borrowed(lhs) = *self {
+                let mut s = crate::String::with_capacity(lhs.len() + rhs.len());
+                s.push_str(lhs);
+                *self = Cow::Owned(s);
+            }
+            self.to_mut().push_str(rhs);
+        }
     }
 }
