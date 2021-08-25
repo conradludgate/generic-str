@@ -1,0 +1,1 @@
+window.ALL_CRATES = ["cursed_strings","generic_vec"];

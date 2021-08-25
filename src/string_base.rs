@@ -6,12 +6,13 @@ use std::{
 
 use generic_vec::{
     raw::{Storage, StorageWithCapacity},
-    GenericVec, HeapVec,
+    ArrayVec, GenericVec, HeapVec,
 };
 
 use crate::{from_utf8_unchecked_mut, validation::truncate_to_char_boundary};
 
 #[derive(Default, Copy, Clone)]
+#[repr(transparent)]
 pub struct StringBase<S: ?Sized> {
     pub(crate) storage: S,
 }
@@ -101,6 +102,25 @@ impl StringBase<HeapVec<u8>> {
     }
 }
 
+impl<const N: usize> StringBase<ArrayVec<u8, N>> {
+    /// Creates a new empty `ArrayString`.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// # use cursed_strings::ArrayString;
+    /// let s = ArrayString::<8>::new();
+    /// ```
+    #[inline]
+    pub const fn new() -> Self {
+        Self {
+            storage: ArrayVec::new(),
+        }
+    }
+}
+
 impl<A: Allocator> StringBase<HeapVec<u8, A>> {
     pub fn with_alloc(alloc: A) -> Self {
         Self {
@@ -115,7 +135,13 @@ pub struct FromUtf8Error {
     error: Utf8Error,
 }
 
-impl<S: Storage<u8>> StringBase<GenericVec<u8, S>> {
+impl<S: ?Sized + Storage<u8>> StringBase<GenericVec<u8, S>> {
+    pub const fn with_storage(storage: S) -> Self where S: Sized {
+        StringBase {
+            storage: GenericVec::with_storage(storage),
+        }
+    }
+
     /// Converts a vector of bytes to a `String`.
     ///
     /// A string ([`String`]) is made of bytes ([`u8`]), and a vector of bytes
@@ -177,7 +203,7 @@ impl<S: Storage<u8>> StringBase<GenericVec<u8, S>> {
     /// [`&str`]: prim@str
     /// [`into_bytes`]: StringBase::into_bytes
     #[inline]
-    pub fn from_utf8(vec: GenericVec<u8, S>) -> Result<Self, FromUtf8Error> {
+    pub fn from_utf8(vec: GenericVec<u8, S>) -> Result<Self, FromUtf8Error> where S: Sized {
         match std::str::from_utf8(&vec) {
             Ok(..) => Ok(Self { storage: vec }),
             Err(e) => Err(FromUtf8Error {
@@ -216,7 +242,7 @@ impl<S: Storage<u8>> StringBase<GenericVec<u8, S>> {
     /// assert_eq!(sparkle_heart, "💖");
     /// ```
     #[inline]
-    pub unsafe fn from_utf8_unchecked(vec: GenericVec<u8, S>) -> Self {
+    pub unsafe fn from_utf8_unchecked(vec: GenericVec<u8, S>) -> Self where S: Sized {
         Self { storage: vec }
     }
     /// Converts a `String` into a byte vector.
@@ -235,7 +261,7 @@ impl<S: Storage<u8>> StringBase<GenericVec<u8, S>> {
     /// assert_eq!(&[104, 101, 108, 108, 111][..], &bytes[..]);
     /// ```
     #[inline]
-    pub fn into_bytes(self) -> GenericVec<u8, S> {
+    pub fn into_bytes(self) -> GenericVec<u8, S> where S: Sized {
         self.storage
     }
     /// Extracts a string slice containing the entire `String`.
@@ -649,7 +675,7 @@ impl<S: Storage<u8>> StringBase<GenericVec<u8, S>> {
     }
 }
 
-impl<S: StorageWithCapacity<u8>> StringBase<GenericVec<u8, S>> {
+impl<S: ?Sized + StorageWithCapacity<u8>> StringBase<GenericVec<u8, S>> {
     /// Returns this `String`'s capacity, in bytes.
     ///
     /// # Examples

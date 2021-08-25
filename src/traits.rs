@@ -9,7 +9,7 @@ use std::{
     ptr::NonNull,
 };
 
-impl<T: std::ops::Deref> std::ops::Deref for StringBase<T> {
+impl<T: ?Sized + std::ops::Deref> std::ops::Deref for StringBase<T> {
     type Target = StringBase<T::Target>;
 
     fn deref(&self) -> &StringBase<T::Target> {
@@ -17,7 +17,7 @@ impl<T: std::ops::Deref> std::ops::Deref for StringBase<T> {
     }
 }
 
-impl<T: std::ops::DerefMut> std::ops::DerefMut for StringBase<T> {
+impl<T: ?Sized + std::ops::DerefMut> std::ops::DerefMut for StringBase<T> {
     fn deref_mut(&mut self) -> &mut StringBase<T::Target> {
         unsafe {
             std::mem::transmute::<&mut T::Target, &mut StringBase<T::Target>>(
@@ -61,7 +61,7 @@ impl<R, T: ?Sized + Index<R>> Index<R> for StringBase<T> {
     }
 }
 
-impl<R, T: IndexMut<R>> IndexMut<R> for StringBase<T> {
+impl<R, T: ?Sized + IndexMut<R>> IndexMut<R> for StringBase<T> {
     fn index_mut(&mut self, index: R) -> &mut Self::Output {
         unsafe {
             std::mem::transmute::<&mut T::Output, &mut StringBase<T::Output>>(
