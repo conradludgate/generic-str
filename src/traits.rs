@@ -129,6 +129,24 @@ impl From<&str> for StringBase<HeapVec<u8>> {
     }
 }
 
+impl From<&str> for StringBase<Vec<u8>> {
+    fn from(s: &str) -> Self {
+        s.to_owned().into()
+    }
+}
+
+impl From<&str> for &StringBase<[u8]> {
+    fn from(s: &str) -> Self {
+        unsafe { std::mem::transmute(s) }
+    }
+}
+
+impl From<&mut str> for &mut StringBase<[u8]> {
+    fn from(s: &mut str) -> Self {
+        unsafe { std::mem::transmute(s) }
+    }
+}
+
 impl From<String> for StringBase<Vec<u8>> {
     fn from(s: String) -> Self {
         let (ptr, length, capacity) = s.into_raw_parts();
@@ -137,12 +155,6 @@ impl From<String> for StringBase<Vec<u8>> {
                 storage: Vec::<u8>::from_raw_parts(ptr, length, capacity),
             }
         }
-    }
-}
-
-impl From<&mut str> for &mut StringBase<[u8]> {
-    fn from(s: &mut str) -> Self {
-        unsafe { std::mem::transmute(s) }
     }
 }
 

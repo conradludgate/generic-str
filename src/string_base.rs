@@ -1,13 +1,6 @@
-use std::{
-    alloc::Allocator,
-    slice::SliceIndex,
-    str::{Bytes, CharIndices, Chars, Utf8Error},
-};
+use std::{alloc::{Allocator}, slice::SliceIndex, str::{Bytes, CharIndices, Chars, Utf8Error}};
 
-use generic_vec::{
-    raw::{Storage, StorageWithCapacity},
-    ArrayVec, GenericVec, HeapVec,
-};
+use generic_vec::{ArrayVec, GenericVec, HeapVec, raw::{Heap, Storage, StorageWithCapacity}};
 
 use crate::{from_utf8_unchecked_mut, validation::truncate_to_char_boundary};
 
@@ -17,19 +10,7 @@ pub struct StringBase<S: ?Sized> {
     pub(crate) storage: S,
 }
 
-impl From<&str> for StringBase<Vec<u8>> {
-    fn from(s: &str) -> Self {
-        s.to_owned().into()
-    }
-}
-
-impl From<&str> for &StringBase<[u8]> {
-    fn from(s: &str) -> Self {
-        unsafe { std::mem::transmute(s) }
-    }
-}
-
-impl StringBase<HeapVec<u8>> {
+impl crate::String {
     /// Creates a new empty `String`.
     ///
     /// Given that the `String` is empty, this will not allocate any initial
@@ -51,9 +32,7 @@ impl StringBase<HeapVec<u8>> {
     /// ```
     #[inline]
     pub const fn new() -> Self {
-        Self {
-            storage: HeapVec::new(),
-        }
+        Self::with_storage(Heap::new())
     }
 
     /// Creates a new empty `String` with a particular capacity.
@@ -97,12 +76,12 @@ impl StringBase<HeapVec<u8>> {
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
-            storage: HeapVec::with_capacity(capacity),
+            storage: HeapVec::with_capacity(capacity)
         }
     }
 }
 
-impl<const N: usize> StringBase<ArrayVec<u8, N>> {
+impl<const N: usize> crate::ArrayString<N> {
     /// Creates a new empty `ArrayString`.
     ///
     /// # Examples
@@ -136,6 +115,45 @@ pub struct FromUtf8Error {
 }
 
 impl<S: ?Sized + Storage<u8>> StringBase<GenericVec<u8, S>> {
+    /// Creates a new empty `String` with a particular storage backend.
+    ///
+    /// `String`s have an internal buffer to hold their data. The capacity is
+    /// the length of that buffer, and can be queried with the [`capacity`]
+    /// method. This method creates an empty `String`, but one with an initial
+    /// buffer that can hold `capacity` bytes. This is useful when you may be
+    /// appending a bunch of data to the `String`, reducing the number of
+    /// reallocations it needs to do.
+    ///
+    /// [`capacity`]: StringBase::capacity
+    ///
+    /// If the given capacity is `0`, no allocation will occur, and this method
+    /// is identical to the [`new`] method.
+    ///
+    /// [`new`]: StringBase::new
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// # use cursed_strings::String;
+    /// let mut s = String::with_capacity(10);
+    ///
+    /// // The String contains no chars, even though it has capacity for more
+    /// assert_eq!(s.len(), 0);
+    ///
+    /// // These are all done without reallocating...
+    /// let cap = s.capacity();
+    /// for _ in 0..10 {
+    ///     s.push('a');
+    /// }
+    ///
+    /// assert_eq!(s.capacity(), cap);
+    ///
+    /// // ...but this may make the string reallocate
+    /// s.push('a');
+    /// ```
+    #[inline]
     pub const fn with_storage(storage: S) -> Self where S: Sized {
         StringBase {
             storage: GenericVec::with_storage(storage),
@@ -673,9 +691,7 @@ impl<S: ?Sized + Storage<u8>> StringBase<GenericVec<u8, S>> {
     pub fn clear(&mut self) {
         self.storage.clear()
     }
-}
 
-impl<S: ?Sized + StorageWithCapacity<u8>> StringBase<GenericVec<u8, S>> {
     /// Returns this `String`'s capacity, in bytes.
     ///
     /// # Examples

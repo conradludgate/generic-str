@@ -1365,16 +1365,25 @@
 <span id="1365">1365</span>
 <span id="1366">1366</span>
 <span id="1367">1367</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std</span>::{
-    <span class="ident">alloc::Allocator</span>,
-    <span class="ident">slice::SliceIndex</span>,
-    <span class="ident">str</span>::{<span class="ident">Bytes</span>, <span class="ident">CharIndices</span>, <span class="ident">Chars</span>, <span class="ident">Utf8Error</span>},
-};
+<span id="1368">1368</span>
+<span id="1369">1369</span>
+<span id="1370">1370</span>
+<span id="1371">1371</span>
+<span id="1372">1372</span>
+<span id="1373">1373</span>
+<span id="1374">1374</span>
+<span id="1375">1375</span>
+<span id="1376">1376</span>
+<span id="1377">1377</span>
+<span id="1378">1378</span>
+<span id="1379">1379</span>
+<span id="1380">1380</span>
+<span id="1381">1381</span>
+<span id="1382">1382</span>
+<span id="1383">1383</span>
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">alloc</span>::{<span class="ident">Allocator</span>}, <span class="ident">slice::SliceIndex</span>, <span class="ident">str</span>::{<span class="ident">Bytes</span>, <span class="ident">CharIndices</span>, <span class="ident">Chars</span>, <span class="ident">Utf8Error</span>}};
 
-<span class="kw">use</span> <span class="ident">generic_vec</span>::{
-    <span class="ident">raw</span>::{<span class="ident">Storage</span>, <span class="ident">StorageWithCapacity</span>},
-    <span class="ident">ArrayVec</span>, <span class="ident">GenericVec</span>, <span class="ident">HeapVec</span>,
-};
+<span class="kw">use</span> <span class="ident">generic_vec</span>::{<span class="ident">ArrayVec</span>, <span class="ident">GenericVec</span>, <span class="ident">HeapVec</span>, <span class="ident">raw</span>::{<span class="ident">Heap</span>, <span class="ident">Storage</span>, <span class="ident">StorageWithCapacity</span>}};
 
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">from_utf8_unchecked_mut</span>, <span class="ident">validation::truncate_to_char_boundary</span>};
 
@@ -1384,19 +1393,7 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">storage</span>: <span class="ident">S</span>,
 }
 
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">StringBase</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="ident">s</span>.<span class="ident">to_owned</span>().<span class="ident">into</span>()
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">StringBase</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="kw">unsafe</span> { <span class="ident">std::mem::transmute</span>(<span class="ident">s</span>) }
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">StringBase</span><span class="op">&lt;</span><span class="ident">HeapVec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+<span class="kw">impl</span> <span class="ident"><span class="kw">crate</span>::String</span> {
     <span class="doccomment">/// Creates a new empty `String`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Given that the `String` is empty, this will not allocate any initial</span>
@@ -1418,9 +1415,7 @@
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">storage</span>: <span class="ident">HeapVec::new</span>(),
-        }
+        <span class="ident"><span class="self">Self</span>::with_storage</span>(<span class="ident">Heap::new</span>())
     }
 
     <span class="doccomment">/// Creates a new empty `String` with a particular capacity.</span>
@@ -1464,12 +1459,12 @@
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_capacity</span>(<span class="ident">capacity</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span> {
-            <span class="ident">storage</span>: <span class="ident">HeapVec::with_capacity</span>(<span class="ident">capacity</span>),
+            <span class="ident">storage</span>: <span class="ident">HeapVec::with_capacity</span>(<span class="ident">capacity</span>)
         }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="kw">const</span> <span class="ident">N</span>: <span class="ident">usize</span><span class="op">&gt;</span> <span class="ident">StringBase</span><span class="op">&lt;</span><span class="ident">ArrayVec</span><span class="op">&lt;</span><span class="ident">u8</span>, <span class="ident">N</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="kw">const</span> <span class="ident">N</span>: <span class="ident">usize</span><span class="op">&gt;</span> <span class="ident"><span class="kw">crate</span>::ArrayString</span><span class="op">&lt;</span><span class="ident">N</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Creates a new empty `ArrayString`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Examples</span>
@@ -1503,6 +1498,45 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Storage</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">StringBase</span><span class="op">&lt;</span><span class="ident">GenericVec</span><span class="op">&lt;</span><span class="ident">u8</span>, <span class="ident">S</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// Creates a new empty `String` with a particular storage backend.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// `String`s have an internal buffer to hold their data. The capacity is</span>
+    <span class="doccomment">/// the length of that buffer, and can be queried with the [`capacity`]</span>
+    <span class="doccomment">/// method. This method creates an empty `String`, but one with an initial</span>
+    <span class="doccomment">/// buffer that can hold `capacity` bytes. This is useful when you may be</span>
+    <span class="doccomment">/// appending a bunch of data to the `String`, reducing the number of</span>
+    <span class="doccomment">/// reallocations it needs to do.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// [`capacity`]: StringBase::capacity</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// If the given capacity is `0`, no allocation will occur, and this method</span>
+    <span class="doccomment">/// is identical to the [`new`] method.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// [`new`]: StringBase::new</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Basic usage:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// # use cursed_strings::String;</span>
+    <span class="doccomment">/// let mut s = String::with_capacity(10);</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// // The String contains no chars, even though it has capacity for more</span>
+    <span class="doccomment">/// assert_eq!(s.len(), 0);</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// // These are all done without reallocating...</span>
+    <span class="doccomment">/// let cap = s.capacity();</span>
+    <span class="doccomment">/// for _ in 0..10 {</span>
+    <span class="doccomment">///     s.push(&#39;a&#39;);</span>
+    <span class="doccomment">/// }</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// assert_eq!(s.capacity(), cap);</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// // ...but this may make the string reallocate</span>
+    <span class="doccomment">/// s.push(&#39;a&#39;);</span>
+    <span class="doccomment">/// ```</span>
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">with_storage</span>(<span class="ident">storage</span>: <span class="ident">S</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> <span class="kw">where</span> <span class="ident">S</span>: <span class="ident">Sized</span> {
         <span class="ident">StringBase</span> {
             <span class="ident">storage</span>: <span class="ident">GenericVec::with_storage</span>(<span class="ident">storage</span>),
@@ -2040,9 +2074,7 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">clear</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
         <span class="self">self</span>.<span class="ident">storage</span>.<span class="ident">clear</span>()
     }
-}
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">StorageWithCapacity</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">StringBase</span><span class="op">&lt;</span><span class="ident">GenericVec</span><span class="op">&lt;</span><span class="ident">u8</span>, <span class="ident">S</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Returns this `String`&#39;s capacity, in bytes.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Examples</span>
