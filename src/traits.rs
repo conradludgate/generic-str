@@ -146,6 +146,12 @@ impl From<&mut str> for &mut StringBase<[u8]> {
     }
 }
 
+impl<'a, S: ?Sized + AsRef<[u8]>> From<&'a StringBase<S>> for &'a str {
+    fn from(s: &'a StringBase<S>) -> Self {
+        unsafe { std::mem::transmute(s.storage.as_ref()) }
+    }
+}
+
 impl<S: ?Sized, T: ?Sized> PartialEq<StringBase<T>> for StringBase<S>
 where
     S: PartialEq<T>,

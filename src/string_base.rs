@@ -1,8 +1,15 @@
-use std::{alloc::Allocator, slice::SliceIndex, str::Utf8Error};
+use std::{
+    alloc::Allocator,
+    slice::SliceIndex,
+    str::{Bytes, CharIndices, Chars, Utf8Error},
+};
 
-use generic_vec::{GenericVec, HeapVec, raw::{Storage, StorageWithCapacity}};
+use generic_vec::{
+    raw::{Storage, StorageWithCapacity},
+    GenericVec, HeapVec,
+};
 
-use crate::{chars::{CharIndices, Chars}, validation::truncate_to_char_boundary};
+use crate::{from_utf8_unchecked_mut, validation::truncate_to_char_boundary};
 
 #[derive(Default, Copy, Clone)]
 pub struct StringBase<S: ?Sized> {
@@ -88,7 +95,9 @@ impl StringBase<HeapVec<u8>> {
     /// ```
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
-        Self { storage: HeapVec::with_capacity(capacity) }
+        Self {
+            storage: HeapVec::with_capacity(capacity),
+        }
     }
 }
 
@@ -281,7 +290,8 @@ impl<S: Storage<u8>> StringBase<GenericVec<u8, S>> {
     #[inline]
     pub fn push_str(&mut self, string: &StringBase<[u8]>) {
         self.storage.extend_from_slice(&string.storage)
-    }/// Ensures that this `String`'s capacity is at least `additional` bytes
+    }
+    /// Ensures that this `String`'s capacity is at least `additional` bytes
     /// larger than its length.
     ///
     /// The capacity may be increased by more than `additional` bytes if it
@@ -395,6 +405,38 @@ impl<S: Storage<u8>> StringBase<GenericVec<u8, S>> {
         Some(ch)
     }
 
+    /// Shortens this `String` to the specified length.
+    ///
+    /// If `new_len` is greater than the string's current length, this has no
+    /// effect.
+    ///
+    /// Note that this method has no effect on the allocated capacity
+    /// of the string
+    ///
+    /// # Panics
+    ///
+    /// Panics if `new_len` does not lie on a [`char`] boundary.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// # use cursed_strings::String;
+    /// let mut s = String::from("hello");
+    ///
+    /// s.truncate(2);
+    ///
+    /// assert_eq!(s, "he");
+    /// ```
+    #[inline]
+    pub fn truncate(&mut self, new_len: usize) {
+        if new_len <= self.len() {
+            assert!(self.is_char_boundary(new_len));
+            self.storage.truncate(new_len)
+        }
+    }
+
     /// Removes a [`char`] from this `String` at a byte position and returns it.
     ///
     /// This is an *O*(*n*) operation, as it requires copying every element in the
@@ -427,7 +469,11 @@ impl<S: Storage<u8>> StringBase<GenericVec<u8, S>> {
         let next = idx + ch.len_utf8();
         let len = self.len();
         unsafe {
-            std::ptr::copy(self.storage.as_ptr().add(next), self.storage.as_mut_ptr().add(idx), len - next);
+            std::ptr::copy(
+                self.storage.as_ptr().add(next),
+                self.storage.as_mut_ptr().add(idx),
+                len - next,
+            );
             self.storage.set_len_unchecked(len - (next - idx));
         }
         ch
@@ -473,7 +519,11 @@ impl<S: Storage<u8>> StringBase<GenericVec<u8, S>> {
         let amt = bytes.len();
         self.storage.reserve(amt);
 
-        std::ptr::copy(self.storage.as_ptr().add(idx), self.storage.as_mut_ptr().add(idx + amt), len - idx);
+        std::ptr::copy(
+            self.storage.as_ptr().add(idx),
+            self.storage.as_mut_ptr().add(idx + amt),
+            len - idx,
+        );
         std::ptr::copy(bytes.as_ptr(), self.storage.as_mut_ptr().add(idx), amt);
         self.storage.set_len_unchecked(len + amt);
     }
@@ -507,6 +557,95 @@ impl<S: Storage<u8>> StringBase<GenericVec<u8, S>> {
         unsafe {
             self.insert_bytes(idx, string.as_bytes());
         }
+    }
+
+    /// Returns a mutable reference to the contents of this `String`.
+    ///
+    /// # Safety
+    ///
+    /// This function is unsafe because it does not check that the bytes passed
+    /// to it are valid UTF-8. If this constraint is violated, it may cause
+    /// memory unsafety issues with future users of the `String`, as the rest of
+    /// the standard library assumes that `String`s are valid UTF-8.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// # use cursed_strings::String;
+    /// let mut s = String::from("hello");
+    ///
+    /// unsafe {
+    ///     let vec = s.as_mut_vec();
+    ///     assert_eq!(&[104, 101, 108, 108, 111][..], &vec[..]);
+    ///
+    ///     vec.reverse();
+    /// }
+    /// assert_eq!(s, "olleh");
+    /// ```
+    #[inline]
+    pub unsafe fn as_mut_vec(&mut self) -> &mut GenericVec<u8, S> {
+        &mut self.storage
+    }
+
+    /// Splits the string into two at the given byte index.
+    ///
+    /// Returns a newly allocated `String`. `self` contains bytes `[0, at)`, and
+    /// the returned `String` contains bytes `[at, len)`. `at` must be on the
+    /// boundary of a UTF-8 code point.
+    ///
+    /// Note that the capacity of `self` does not change.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `at` is not on a `UTF-8` code point boundary, or if it is beyond the last
+    /// code point of the string.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use cursed_strings::String;
+    /// # fn main() {
+    /// let mut hello = String::from("Hello, World!");
+    /// let world: String = hello.split_off(7);
+    /// assert_eq!(hello, "Hello, ");
+    /// assert_eq!(world, "World!");
+    /// # }
+    /// ```
+    #[inline]
+    #[must_use = "use `.truncate()` if you don't need the other half"]
+    pub fn split_off<B: ?Sized + StorageWithCapacity<u8>>(
+        &mut self,
+        at: usize,
+    ) -> StringBase<GenericVec<u8, B>> {
+        assert!(self.is_char_boundary(at));
+        let other = self.storage.split_off(at);
+        unsafe { StringBase::from_utf8_unchecked(other) }
+    }
+
+    /// Truncates this `String`, removing all contents.
+    ///
+    /// While this means the `String` will have a length of zero, it does not
+    /// touch its capacity.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// # use cursed_strings::String;
+    /// let mut s = String::from("foo");
+    ///
+    /// s.clear();
+    ///
+    /// assert!(s.is_empty());
+    /// assert_eq!(0, s.len());
+    /// assert_eq!(3, s.capacity());
+    /// ```
+    #[inline]
+    pub fn clear(&mut self) {
+        self.storage.clear()
     }
 }
 
@@ -683,7 +822,10 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
     /// assert_eq!(s, "🍔∈🌏");
     /// ```
     #[inline(always)]
-    pub unsafe fn as_bytes_mut(&mut self) -> &mut [u8] where T: AsMut<[u8]> {
+    pub unsafe fn as_bytes_mut(&mut self) -> &mut [u8]
+    where
+        T: AsMut<[u8]>,
+    {
         // SAFETY: const sound because we transmute two types with the same layout
         std::mem::transmute(self.storage.as_mut())
     }
@@ -722,7 +864,10 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
     /// It is your responsibility to make sure that the string slice only gets
     /// modified in a way that it remains valid UTF-8.
     #[inline]
-    pub fn as_mut_ptr(&mut self) -> *mut u8 where T: AsMut<[u8]> {
+    pub fn as_mut_ptr(&mut self) -> *mut u8
+    where
+        T: AsMut<[u8]>,
+    {
         self.storage.as_mut() as *mut [u8] as *mut u8
     }
 
@@ -779,7 +924,10 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
     /// assert_eq!(v, "HEllo");
     /// ```
     #[inline]
-    pub fn get_mut<I: SliceIndex<StringBase<[u8]>>>(&mut self, i: I) -> Option<&mut I::Output> where T: AsMut<[u8]> {
+    pub fn get_mut<I: SliceIndex<StringBase<[u8]>>>(&mut self, i: I) -> Option<&mut I::Output>
+    where
+        T: AsMut<[u8]>,
+    {
         i.get_mut(self.as_mut())
     }
 
@@ -846,7 +994,13 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
     /// }
     /// ```
     #[inline]
-    pub unsafe fn get_unchecked_mut<I: SliceIndex<StringBase<[u8]>>>(&mut self, i: I) -> &mut I::Output where T: AsMut<[u8]>  {
+    pub unsafe fn get_unchecked_mut<I: SliceIndex<StringBase<[u8]>>>(
+        &mut self,
+        i: I,
+    ) -> &mut I::Output
+    where
+        T: AsMut<[u8]>,
+    {
         // SAFETY: the caller must uphold the safety contract for `get_unchecked_mut`;
         // the slice is dereferencable because `self` is a safe reference.
         // The returned pointer is safe because impls of `SliceIndex` have to guarantee that it is.
@@ -889,22 +1043,193 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
         // is_char_boundary checks that the index is in [0, .len()]
         if self.is_char_boundary(mid) {
             // SAFETY: just checked that `mid` is on a char boundary.
-            unsafe { (self.get_unchecked(0..mid), self.get_unchecked(mid..self.len())) }
+            unsafe {
+                (
+                    self.get_unchecked(0..mid),
+                    self.get_unchecked(mid..self.len()),
+                )
+            }
         } else {
             slice_error_fail(self.as_ref(), 0, mid)
         }
     }
 
-    pub fn chars(&self) -> Chars<'_> {
-        Chars {
-            iter: self.storage.as_ref().into_iter(),
+    /// Divide one mutable string slice into two at an index.
+    ///
+    /// The argument, `mid`, should be a byte offset from the start of the
+    /// string. It must also be on the boundary of a UTF-8 code point.
+    ///
+    /// The two slices returned go from the start of the string slice to `mid`,
+    /// and from `mid` to the end of the string slice.
+    ///
+    /// To get immutable string slices instead, see the [`split_at`] method.
+    ///
+    /// [`split_at`]: StringBase::split_at
+    ///
+    /// # Panics
+    ///
+    /// Panics if `mid` is not on a UTF-8 code point boundary, or if it is
+    /// past the end of the last code point of the string slice.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// # use cursed_strings::String;
+    /// let mut s = String::from("Per Martin-Löf");
+    /// {
+    ///     let (first, last) = s.split_at_mut(3);
+    ///     first.make_ascii_uppercase();
+    ///     assert_eq!(first, "PER");
+    ///     assert_eq!(last, " Martin-Löf");
+    /// }
+    /// assert_eq!(s, "PER Martin-Löf");
+    /// ```
+    #[inline]
+    pub fn split_at_mut(&mut self, mid: usize) -> (&mut StringBase<[u8]>, &mut StringBase<[u8]>)
+    where
+        T: AsMut<[u8]>,
+    {
+        // is_char_boundary checks that the index is in [0, .len()]
+        if self.is_char_boundary(mid) {
+            let len = self.len();
+            let ptr = self.as_mut_ptr();
+            // SAFETY: just checked that `mid` is on a char boundary.
+            unsafe {
+                (
+                    from_utf8_unchecked_mut(core::slice::from_raw_parts_mut(ptr, mid)),
+                    from_utf8_unchecked_mut(core::slice::from_raw_parts_mut(
+                        ptr.add(mid),
+                        len - mid,
+                    )),
+                )
+            }
+        } else {
+            slice_error_fail(self.as_ref(), 0, mid)
         }
     }
+
+    /// Returns an iterator over the [`char`]s of a string slice.
+    ///
+    /// As a string slice consists of valid UTF-8, we can iterate through a
+    /// string slice by [`char`]. This method returns such an iterator.
+    ///
+    /// It's important to remember that [`char`] represents a Unicode Scalar
+    /// Value, and may not match your idea of what a 'character' is. Iteration
+    /// over grapheme clusters may be what you actually want. This functionality
+    /// is not provided by Rust's standard library, check crates.io instead.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// # use cursed_strings::str;
+    /// let word = <&str>::from("goodbye");
+    ///
+    /// let count = word.chars().count();
+    /// assert_eq!(7, count);
+    ///
+    /// let mut chars = word.chars();
+    ///
+    /// assert_eq!(Some('g'), chars.next());
+    /// assert_eq!(Some('o'), chars.next());
+    /// assert_eq!(Some('o'), chars.next());
+    /// assert_eq!(Some('d'), chars.next());
+    /// assert_eq!(Some('b'), chars.next());
+    /// assert_eq!(Some('y'), chars.next());
+    /// assert_eq!(Some('e'), chars.next());
+    ///
+    /// assert_eq!(None, chars.next());
+    /// ```
+    ///
+    /// Remember, [`char`]s may not match your intuition about characters:
+    ///
+    /// [`char`]: prim@char
+    ///
+    /// ```
+    /// let y = "y̆";
+    ///
+    /// let mut chars = y.chars();
+    ///
+    /// assert_eq!(Some('y'), chars.next()); // not 'y̆'
+    /// assert_eq!(Some('\u{0306}'), chars.next());
+    ///
+    /// assert_eq!(None, chars.next());
+    /// ```
+    #[inline]
+    pub fn chars(&self) -> Chars<'_> {
+        let s: &str = self.into();
+        s.chars()
+    }
     pub fn char_indices(&self) -> CharIndices<'_> {
-        CharIndices {
-            front_offset: 0,
-            iter: self.chars(),
-        }
+        let s: &str = self.into();
+        s.char_indices()
+    }
+
+    /// An iterator over the bytes of a string slice.
+    ///
+    /// As a string slice consists of a sequence of bytes, we can iterate
+    /// through a string slice by byte. This method returns such an iterator.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// # use cursed_strings::str;
+    /// let mut bytes = <&str>::from("bors").bytes();
+    ///
+    /// assert_eq!(Some(b'b'), bytes.next());
+    /// assert_eq!(Some(b'o'), bytes.next());
+    /// assert_eq!(Some(b'r'), bytes.next());
+    /// assert_eq!(Some(b's'), bytes.next());
+    ///
+    /// assert_eq!(None, bytes.next());
+    /// ```
+    #[inline]
+    pub fn bytes(&self) -> Bytes<'_> {
+        let s: &str = self.into();
+        s.bytes()
+    }
+
+    /// Checks if all characters in this string are within the ASCII range.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use cursed_strings::str;
+    /// let ascii = <&str>::from("hello!\n");
+    /// let non_ascii = <&str>::from("Grüße, Jürgen ❤");
+    ///
+    /// assert!(ascii.is_ascii());
+    /// assert!(!non_ascii.is_ascii());
+    /// ```
+    #[inline]
+    pub fn is_ascii(&self) -> bool {
+        // We can treat each byte as character here: all multibyte characters
+        // start with a byte that is not in the ascii range, so we will stop
+        // there already.
+        self.as_bytes().is_ascii()
+    }
+
+    /// Checks that two strings are an ASCII case-insensitive match.
+    ///
+    /// Same as `to_ascii_lowercase(a) == to_ascii_lowercase(b)`,
+    /// but without allocating and copying temporaries.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use cursed_strings::str;
+    /// assert!(<&str>::from("Ferris").eq_ignore_ascii_case("FERRIS".into()));
+    /// assert!(<&str>::from("Ferrös").eq_ignore_ascii_case("FERRöS".into()));
+    /// assert!(!<&str>::from("Ferrös").eq_ignore_ascii_case("FERRÖS".into()));
+    /// ```
+    #[inline]
+    pub fn eq_ignore_ascii_case(&self, other: &StringBase<[u8]>) -> bool {
+        self.as_bytes().eq_ignore_ascii_case(other.as_bytes())
     }
 
     /// Converts this string to its ASCII upper case equivalent in-place.
@@ -928,10 +1253,43 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
     /// assert_eq!(s, "GRüßE, JüRGEN ❤");
     /// ```
     #[inline]
-    pub fn make_ascii_uppercase(&mut self) where T: AsMut<[u8]> {
+    pub fn make_ascii_uppercase(&mut self)
+    where
+        T: AsMut<[u8]>,
+    {
         // SAFETY: safe because we transmute two types with the same layout.
         let me = unsafe { self.as_bytes_mut() };
         me.make_ascii_uppercase()
+    }
+
+    /// Converts this string to its ASCII lower case equivalent in-place.
+    ///
+    /// ASCII letters 'A' to 'Z' are mapped to 'a' to 'z',
+    /// but non-ASCII letters are unchanged.
+    ///
+    /// To return a new lowercased value without modifying the existing one, use
+    /// [`to_ascii_lowercase()`].
+    ///
+    /// [`to_ascii_lowercase()`]: #method.to_ascii_lowercase
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use cursed_strings::String;
+    /// let mut s = String::from("GRÜßE, JÜRGEN ❤");
+    ///
+    /// s.make_ascii_lowercase();
+    ///
+    /// assert_eq!(s, "grÜße, jÜrgen ❤");
+    /// ```
+    #[inline]
+    pub fn make_ascii_lowercase(&mut self)
+    where
+        T: AsMut<[u8]>,
+    {
+        // SAFETY: safe because we transmute two types with the same layout.
+        let me = unsafe { self.as_bytes_mut() };
+        me.make_ascii_lowercase()
     }
 }
 
@@ -946,7 +1304,10 @@ pub(crate) fn slice_error_fail(s: &StringBase<[u8]>, begin: usize, end: usize) -
     // 1. out of bounds
     if begin > s.len() || end > s.len() {
         let oob_index = if begin > s.len() { begin } else { end };
-        panic!("byte index {} is out of bounds of `{}`{}", oob_index, s_trunc, ellipsis);
+        panic!(
+            "byte index {} is out of bounds of `{}`{}",
+            oob_index, s_trunc, ellipsis
+        );
     }
 
     // 2. begin <= end
@@ -960,7 +1321,11 @@ pub(crate) fn slice_error_fail(s: &StringBase<[u8]>, begin: usize, end: usize) -
     );
 
     // 3. character boundary
-    let index = if !s.is_char_boundary(begin) { begin } else { end };
+    let index = if !s.is_char_boundary(begin) {
+        begin
+    } else {
+        end
+    };
     // find the character
     let mut char_start = index;
     while !s.is_char_boundary(char_start) {

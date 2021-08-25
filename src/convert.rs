@@ -146,7 +146,43 @@ pub fn from_utf8_mut(v: &mut [u8]) -> Result<&mut StringBase<[u8]>, Utf8Error> {
 /// assert_eq!(sparkle_heart, "💖");
 /// ```
 #[inline]
-pub const unsafe fn from_utf8_unchecked(v: &[u8]) -> &str {
+pub const unsafe fn from_utf8_unchecked(v: &[u8]) -> &StringBase<[u8]> {
+    // SAFETY: the caller must guarantee that the bytes `v` are valid UTF-8.
+    // Also relies on `&str` and `&[u8]` having the same layout.
+    std::mem::transmute(v)
+}
+
+/// Converts a slice of bytes to a string slice without checking
+/// that the string contains valid UTF-8.
+///
+/// See the safe version, [`from_utf8`], for more information.
+///
+/// # Safety
+///
+/// This function is unsafe because it does not check that the bytes passed to
+/// it are valid UTF-8. If this constraint is violated, undefined behavior
+/// results, as the rest of Rust assumes that [`&str`]s are valid UTF-8.
+///
+/// [`&str`]: str
+///
+/// # Examples
+///
+/// Basic usage:
+///
+/// ```
+/// use cursed_strings as str;
+///
+/// // some bytes, in a vector
+/// let sparkle_heart = vec![240, 159, 146, 150];
+///
+/// let sparkle_heart = unsafe {
+///     str::from_utf8_unchecked(&sparkle_heart)
+/// };
+///
+/// assert_eq!(sparkle_heart, "💖");
+/// ```
+#[inline]
+pub const unsafe fn from_utf8_unchecked_mut(v: &mut [u8]) -> &mut StringBase<[u8]> {
     // SAFETY: the caller must guarantee that the bytes `v` are valid UTF-8.
     // Also relies on `&str` and `&[u8]` having the same layout.
     std::mem::transmute(v)

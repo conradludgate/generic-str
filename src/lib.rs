@@ -17,14 +17,14 @@
 #![feature(slice_index_methods)]
 #![feature(slice_ptr_get)]
 #![feature(slice_ptr_len)]
+#![feature(const_mut_refs)]
 
 use std::alloc::{Global};
 
-use generic_vec::{HeapVec};
+use generic_vec::{ArrayVec, HeapVec};
 
 
 pub mod string_base;
-pub mod chars;
 mod validation;
 mod traits;
 mod slice_index;
@@ -35,6 +35,7 @@ pub use convert::*;
 #[allow(non_camel_case_types)]
 pub type str = string_base::StringBase<[u8]>;
 pub type String<A = Global> = string_base::StringBase<HeapVec<u8, A>>;
+pub type ArrayString<const N: usize> = string_base::StringBase<ArrayVec<u8, N>>;
 
 #[cfg(test)]
 mod tests {
