@@ -1,6 +1,6 @@
 use std::{alloc::{Allocator}, slice::SliceIndex, str::{Bytes, CharIndices, Chars, Utf8Error}};
 
-use generic_vec::{ArrayVec, GenericVec, HeapVec, raw::{Heap, Storage, StorageWithCapacity}};
+use generic_vec::{ArrayVec, GenericVec, raw::{Heap, Storage, StorageWithCapacity}};
 
 use crate::{from_utf8_unchecked_mut, validation::truncate_to_char_boundary};
 
@@ -75,9 +75,13 @@ impl crate::String {
     /// ```
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
-        Self {
-            storage: HeapVec::with_capacity(capacity)
-        }
+        Self::new_with_capacity(capacity)
+    }
+}
+
+impl<A: Allocator> crate::String<A> {
+    pub fn with_alloc(alloc: A) -> Self {
+        Self::with_storage(Heap::with_alloc(alloc))
     }
 }
 
@@ -100,18 +104,17 @@ impl<const N: usize> crate::ArrayString<N> {
     }
 }
 
-impl<A: Allocator> StringBase<HeapVec<u8, A>> {
-    pub fn with_alloc(alloc: A) -> Self {
-        Self {
-            storage: HeapVec::with_alloc(alloc),
-        }
-    }
-}
-
 #[derive(Debug, PartialEq, Eq)]
 pub struct FromUtf8Error {
     bytes: Vec<u8>,
     error: Utf8Error,
+}
+
+impl<S: StorageWithCapacity<u8>> StringBase<GenericVec<u8, S>> {
+    #[inline]
+    pub fn new_with_capacity(capacity: usize) -> Self {
+        Self::with_storage(S::with_capacity(capacity))
+    }
 }
 
 impl<S: ?Sized + Storage<u8>> StringBase<GenericVec<u8, S>> {
@@ -710,7 +713,7 @@ impl<S: ?Sized + Storage<u8>> StringBase<GenericVec<u8, S>> {
     }
 }
 
-impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
+impl<S: ?Sized + AsRef<[u8]>> StringBase<S> {
     /// Returns the length of `self`.
     ///
     /// This length is in bytes, not [`char`]s or graphemes. In other words,
@@ -866,7 +869,7 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
     #[inline(always)]
     pub unsafe fn as_bytes_mut(&mut self) -> &mut [u8]
     where
-        T: AsMut<[u8]>,
+        S: AsMut<[u8]>,
     {
         // SAFETY: const sound because we transmute two types with the same layout
         std::mem::transmute(self.storage.as_mut())
@@ -908,7 +911,7 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
     #[inline]
     pub fn as_mut_ptr(&mut self) -> *mut u8
     where
-        T: AsMut<[u8]>,
+        S: AsMut<[u8]>,
     {
         self.storage.as_mut() as *mut [u8] as *mut u8
     }
@@ -968,7 +971,7 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
     #[inline]
     pub fn get_mut<I: SliceIndex<StringBase<[u8]>>>(&mut self, i: I) -> Option<&mut I::Output>
     where
-        T: AsMut<[u8]>,
+        S: AsMut<[u8]>,
     {
         i.get_mut(self.as_mut())
     }
@@ -1041,7 +1044,7 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
         i: I,
     ) -> &mut I::Output
     where
-        T: AsMut<[u8]>,
+        S: AsMut<[u8]>,
     {
         // SAFETY: the caller must uphold the safety contract for `get_unchecked_mut`;
         // the slice is dereferencable because `self` is a safe reference.
@@ -1131,7 +1134,7 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
     #[inline]
     pub fn split_at_mut(&mut self, mid: usize) -> (&mut StringBase<[u8]>, &mut StringBase<[u8]>)
     where
-        T: AsMut<[u8]>,
+        S: AsMut<[u8]>,
     {
         // is_char_boundary checks that the index is in [0, .len()]
         if self.is_char_boundary(mid) {
@@ -1297,7 +1300,7 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
     #[inline]
     pub fn make_ascii_uppercase(&mut self)
     where
-        T: AsMut<[u8]>,
+        S: AsMut<[u8]>,
     {
         // SAFETY: safe because we transmute two types with the same layout.
         let me = unsafe { self.as_bytes_mut() };
@@ -1327,7 +1330,7 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
     #[inline]
     pub fn make_ascii_lowercase(&mut self)
     where
-        T: AsMut<[u8]>,
+        S: AsMut<[u8]>,
     {
         // SAFETY: safe because we transmute two types with the same layout.
         let me = unsafe { self.as_bytes_mut() };
