@@ -2,9 +2,9 @@ use std::{borrow::Borrow, ops::{Index, IndexMut}};
 
 use crate::chars::{CharIndices, Chars};
 
-#[derive(Default, Copy, Clone)]
+#[derive(Default, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct StringBase<S: ?Sized> {
-    pub storage: S,
+    storage: S,
 }
 
 impl<T: std::ops::Deref> std::ops::Deref for StringBase<T> {
@@ -15,7 +15,7 @@ impl<T: std::ops::Deref> std::ops::Deref for StringBase<T> {
     }
 }
 
-impl<T: AsRef<U>, U: ?Sized> AsRef<StringBase<U>> for StringBase<T> {
+impl<T: ?Sized + AsRef<U>, U: ?Sized> AsRef<StringBase<U>> for StringBase<T> {
     fn as_ref(&self) -> &StringBase<U> {
         unsafe { std::mem::transmute::<&U, &StringBase<U>>(self.storage.as_ref()) }
     }
@@ -59,14 +59,16 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
 impl<T: ?Sized> std::fmt::Debug for StringBase<T> where Self: AsRef<StringBase<[u8]>> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s: &StringBase<[u8]> = self.as_ref();
-        write!(f, "{:?}", s.as_ref())
+        let s: &str = s.as_ref();
+        write!(f, "{:?}", s)
     }
 }
 
 impl<T: ?Sized> std::fmt::Display for StringBase<T> where Self: AsRef<StringBase<[u8]>> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s: &StringBase<[u8]> = self.as_ref();
-        write!(f, "{}", s.as_ref())
+        let s: &str = s.as_ref();
+        write!(f, "{}", s)
     }
 }
 
