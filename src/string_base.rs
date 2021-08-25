@@ -1,13 +1,10 @@
 use std::{alloc::Allocator, slice::SliceIndex, str::Utf8Error};
 
-use generic_vec::{
-    raw::{Storage, StorageWithCapacity},
-    GenericVec, HeapVec,
-};
+use generic_vec::{GenericVec, HeapVec, raw::{Storage, StorageWithCapacity}};
 
 use crate::{chars::{CharIndices, Chars}, validation::truncate_to_char_boundary};
 
-#[derive(Default, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Copy, Clone)]
 pub struct StringBase<S: ?Sized> {
     pub(crate) storage: S,
 }
@@ -34,13 +31,14 @@ impl StringBase<HeapVec<u8>> {
     /// consider the [`with_capacity`] method to prevent excessive
     /// re-allocation.
     ///
-    /// [`with_capacity`]: String::with_capacity
+    /// [`with_capacity`]: StringBase::with_capacity
     ///
     /// # Examples
     ///
     /// Basic usage:
     ///
     /// ```
+    /// # use cursed_strings::String;
     /// let s = String::new();
     /// ```
     #[inline]
@@ -48,6 +46,49 @@ impl StringBase<HeapVec<u8>> {
         Self {
             storage: HeapVec::new(),
         }
+    }
+
+    /// Creates a new empty `String` with a particular capacity.
+    ///
+    /// `String`s have an internal buffer to hold their data. The capacity is
+    /// the length of that buffer, and can be queried with the [`capacity`]
+    /// method. This method creates an empty `String`, but one with an initial
+    /// buffer that can hold `capacity` bytes. This is useful when you may be
+    /// appending a bunch of data to the `String`, reducing the number of
+    /// reallocations it needs to do.
+    ///
+    /// [`capacity`]: StringBase::capacity
+    ///
+    /// If the given capacity is `0`, no allocation will occur, and this method
+    /// is identical to the [`new`] method.
+    ///
+    /// [`new`]: StringBase::new
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// # use cursed_strings::String;
+    /// let mut s = String::with_capacity(10);
+    ///
+    /// // The String contains no chars, even though it has capacity for more
+    /// assert_eq!(s.len(), 0);
+    ///
+    /// // These are all done without reallocating...
+    /// let cap = s.capacity();
+    /// for _ in 0..10 {
+    ///     s.push('a');
+    /// }
+    ///
+    /// assert_eq!(s.capacity(), cap);
+    ///
+    /// // ...but this may make the string reallocate
+    /// s.push('a');
+    /// ```
+    #[inline]
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self { storage: HeapVec::with_capacity(capacity) }
     }
 }
 
@@ -83,7 +124,9 @@ impl<S: Storage<u8>> StringBase<GenericVec<u8, S>> {
     /// sake.
     ///
     /// If you need a [`&str`] instead of a `String`, consider
-    /// [`str::from_utf8`].
+    /// [`from_utf8`].
+    ///
+    /// [`from_utf8`]: crate::from_utf8
     ///
     /// The inverse of this method is [`into_bytes`].
     ///
@@ -97,31 +140,33 @@ impl<S: Storage<u8>> StringBase<GenericVec<u8, S>> {
     /// Basic usage:
     ///
     /// ```
+    /// # use cursed_strings::String;
     /// // some bytes, in a vector
     /// let sparkle_heart = vec![240, 159, 146, 150];
     ///
     /// // We know these bytes are valid, so we'll use `unwrap()`.
-    /// let sparkle_heart = String::from_utf8(sparkle_heart).unwrap();
+    /// let sparkle_heart = String::from_utf8(sparkle_heart.into()).unwrap();
     ///
-    /// assert_eq!("💖", sparkle_heart);
+    /// assert_eq!(sparkle_heart, "💖");
     /// ```
     ///
     /// Incorrect bytes:
     ///
     /// ```
+    /// # use cursed_strings::String;
     /// // some invalid bytes, in a vector
     /// let sparkle_heart = vec![0, 159, 146, 150];
     ///
-    /// assert!(String::from_utf8(sparkle_heart).is_err());
+    /// assert!(String::from_utf8(sparkle_heart.into()).is_err());
     /// ```
     ///
     /// See the docs for [`FromUtf8Error`] for more details on what you can do
     /// with this error.
     ///
-    /// [`from_utf8_unchecked`]: String::from_utf8_unchecked
-    /// [`Vec<u8>`]: crate::vec::Vec
+    /// [`from_utf8_unchecked`]: StringBase::from_utf8_unchecked
+    /// [`Vec<u8>`]: std::vec::Vec
     /// [`&str`]: prim@str
-    /// [`into_bytes`]: String::into_bytes
+    /// [`into_bytes`]: StringBase::into_bytes
     #[inline]
     pub fn from_utf8(vec: GenericVec<u8, S>) -> Result<Self, FromUtf8Error> {
         match std::str::from_utf8(&vec) {
@@ -137,7 +182,7 @@ impl<S: Storage<u8>> StringBase<GenericVec<u8, S>> {
     ///
     /// See the safe version, [`from_utf8`], for more details.
     ///
-    /// [`from_utf8`]: String::from_utf8
+    /// [`from_utf8`]: StringBase::from_utf8
     ///
     /// # Safety
     ///
@@ -151,14 +196,15 @@ impl<S: Storage<u8>> StringBase<GenericVec<u8, S>> {
     /// Basic usage:
     ///
     /// ```
+    /// # use cursed_strings::String;
     /// // some bytes, in a vector
     /// let sparkle_heart = vec![240, 159, 146, 150];
     ///
     /// let sparkle_heart = unsafe {
-    ///     String::from_utf8_unchecked(sparkle_heart)
+    ///     String::from_utf8_unchecked(sparkle_heart.into())
     /// };
     ///
-    /// assert_eq!("💖", sparkle_heart);
+    /// assert_eq!(sparkle_heart, "💖");
     /// ```
     #[inline]
     pub unsafe fn from_utf8_unchecked(vec: GenericVec<u8, S>) -> Self {
@@ -173,6 +219,7 @@ impl<S: Storage<u8>> StringBase<GenericVec<u8, S>> {
     /// Basic usage:
     ///
     /// ```
+    /// # use cursed_strings::String;
     /// let s = String::from("hello");
     /// let bytes = s.into_bytes();
     ///
@@ -189,9 +236,10 @@ impl<S: Storage<u8>> StringBase<GenericVec<u8, S>> {
     /// Basic usage:
     ///
     /// ```
+    /// # use cursed_strings::String;
     /// let s = String::from("foo");
     ///
-    /// assert_eq!("foo", s.as_str());
+    /// assert_eq!(s.as_str(), "foo");
     /// ```
     #[inline]
     pub fn as_str(&self) -> &StringBase<[u8]> {
@@ -204,12 +252,13 @@ impl<S: Storage<u8>> StringBase<GenericVec<u8, S>> {
     /// Basic usage:
     ///
     /// ```
+    /// # use cursed_strings::String;
     /// let mut s = String::from("foobar");
     /// let s_mut_str = s.as_mut_str();
     ///
-    /// s_mut_str.make_ascii_uppercase();
+    /// //s_mut_str.make_ascii_uppercase();
     ///
-    /// assert_eq!("FOOBAR", s_mut_str);
+    /// //assert_eq!(s_mut_str, "FOOBAR");
     /// ```
     #[inline]
     pub fn as_mut_str(&mut self) -> &mut StringBase<[u8]> {
@@ -222,11 +271,12 @@ impl<S: Storage<u8>> StringBase<GenericVec<u8, S>> {
     /// Basic usage:
     ///
     /// ```
+    /// # use cursed_strings::String;
     /// let mut s = String::from("foo");
     ///
-    /// s.push_str("bar");
+    /// s.push_str("bar".into());
     ///
-    /// assert_eq!("foobar", s);
+    /// assert_eq!(s, "foobar");
     /// ```
     #[inline]
     pub fn push_str(&mut self, string: &StringBase<[u8]>) {
@@ -237,20 +287,16 @@ impl<S: Storage<u8>> StringBase<GenericVec<u8, S>> {
     /// The capacity may be increased by more than `additional` bytes if it
     /// chooses, to prevent frequent reallocations.
     ///
-    /// If you do not want this "at least" behavior, see the [`reserve_exact`]
-    /// method.
-    ///
     /// # Panics
     ///
     /// Panics if the new capacity overflows [`usize`].
-    ///
-    /// [`reserve_exact`]: String::reserve_exact
     ///
     /// # Examples
     ///
     /// Basic usage:
     ///
     /// ```
+    /// # use cursed_strings::String;
     /// let mut s = String::new();
     ///
     /// s.reserve(10);
@@ -261,6 +307,7 @@ impl<S: Storage<u8>> StringBase<GenericVec<u8, S>> {
     /// This may not actually increase the capacity:
     ///
     /// ```
+    /// # use cursed_strings::String;
     /// let mut s = String::with_capacity(10);
     /// s.push('a');
     /// s.push('b');
@@ -299,13 +346,14 @@ impl<S: Storage<u8>> StringBase<GenericVec<u8, S>> {
     /// Basic usage:
     ///
     /// ```
+    /// # use cursed_strings::String;
     /// let mut s = String::from("abc");
     ///
     /// s.push('1');
     /// s.push('2');
     /// s.push('3');
     ///
-    /// assert_eq!("abc123", s);
+    /// assert_eq!(s, "abc123");
     /// ```
     #[inline]
     pub fn push(&mut self, ch: char) {
@@ -328,6 +376,7 @@ impl<S: Storage<u8>> StringBase<GenericVec<u8, S>> {
     /// Basic usage:
     ///
     /// ```
+    /// # use cursed_strings::String;
     /// let mut s = String::from("foo");
     ///
     /// assert_eq!(s.pop(), Some('o'));
@@ -361,6 +410,7 @@ impl<S: Storage<u8>> StringBase<GenericVec<u8, S>> {
     /// Basic usage:
     ///
     /// ```
+    /// # use cursed_strings::String;
     /// let mut s = String::from("foo");
     ///
     /// assert_eq!(s.remove(0), 'f');
@@ -398,13 +448,14 @@ impl<S: Storage<u8>> StringBase<GenericVec<u8, S>> {
     /// Basic usage:
     ///
     /// ```
+    /// # use cursed_strings::String;
     /// let mut s = String::with_capacity(3);
     ///
     /// s.insert(0, 'f');
     /// s.insert(1, 'o');
     /// s.insert(2, 'o');
     ///
-    /// assert_eq!("foo", s);
+    /// assert_eq!(s, "foo");
     /// ```
     #[inline]
     pub fn insert(&mut self, idx: usize, ch: char) {
@@ -442,11 +493,12 @@ impl<S: Storage<u8>> StringBase<GenericVec<u8, S>> {
     /// Basic usage:
     ///
     /// ```
+    /// # use cursed_strings::String;
     /// let mut s = String::from("bar");
     ///
     /// s.insert_str(0, "foo");
     ///
-    /// assert_eq!("foobar", s);
+    /// assert_eq!(s, "foobar");
     /// ```
     #[inline]
     pub fn insert_str(&mut self, idx: usize, string: &str) {
@@ -467,6 +519,7 @@ impl<S: StorageWithCapacity<u8>> StringBase<GenericVec<u8, S>> {
     /// Basic usage:
     ///
     /// ```
+    /// # use cursed_strings::String;
     /// let s = String::with_capacity(10);
     ///
     /// assert!(s.capacity() >= 10);
@@ -490,7 +543,8 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
     /// Basic usage:
     ///
     /// ```
-    /// let len = "foo".len();
+    /// # use cursed_strings::str;
+    /// let len = <&str>::from("foo").len();
     /// assert_eq!(3, len);
     ///
     /// assert_eq!("ƒoo".len(), 4); // fancy f!
@@ -508,10 +562,11 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
     /// Basic usage:
     ///
     /// ```
-    /// let s = "";
+    /// # use cursed_strings::str;
+    /// let s: &str = "".into();
     /// assert!(s.is_empty());
     ///
-    /// let s = "not empty";
+    /// let s: &str = "not empty".into();
     /// assert!(!s.is_empty());
     /// ```
     #[inline]
@@ -530,7 +585,8 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
     /// # Examples
     ///
     /// ```
-    /// let s = "Löwe 老虎 Léopard";
+    /// # use cursed_strings::str;
+    /// let s: &str = "Löwe 老虎 Léopard".into();
     /// assert!(s.is_char_boundary(0));
     /// // start of `老`
     /// assert!(s.is_char_boundary(6));
@@ -572,12 +628,15 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
     /// Converts a string slice to a byte slice. To convert the byte slice back
     /// into a string slice, use the [`from_utf8`] function.
     ///
+    /// [`from_utf8`]: crate::from_utf8
+    ///
     /// # Examples
     ///
     /// Basic usage:
     ///
     /// ```
-    /// let bytes = "bors".as_bytes();
+    /// # use cursed_strings::str;
+    /// let bytes = <&str>::from("bors").as_bytes();
     /// assert_eq!(b"bors", bytes);
     /// ```
     #[inline(always)]
@@ -602,7 +661,8 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
     /// Basic usage:
     ///
     /// ```
-    /// let s = "Hello";
+    /// # use cursed_strings::str;
+    /// let s: &str = "Hello".into();
     /// let ptr = s.as_ptr();
     /// ```
     #[inline]
@@ -631,6 +691,7 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
     /// # Examples
     ///
     /// ```
+    /// # use cursed_strings::String;
     /// let v = String::from("🗻∈🌏");
     ///
     /// assert_eq!(Some("🗻"), v.get(0..4));
@@ -655,23 +716,24 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
     /// # Examples
     ///
     /// ```
+    /// # use cursed_strings::String;
     /// let mut v = String::from("hello");
     /// // correct length
     /// assert!(v.get_mut(0..5).is_some());
     /// // out of bounds
     /// assert!(v.get_mut(..42).is_none());
-    /// assert_eq!(Some("he"), v.get_mut(0..2).map(|v| &*v));
+    /// assert_eq!(v.get_mut(0..2).map(|v| &*v), Some("he"));
     ///
-    /// assert_eq!("hello", v);
+    /// assert_eq!(v, "hello");
     /// {
     ///     let s = v.get_mut(0..2);
     ///     let s = s.map(|s| {
-    ///         s.make_ascii_uppercase();
+    ///         // s.make_ascii_uppercase();
     ///         &*s
     ///     });
-    ///     assert_eq!(Some("HE"), s);
+    ///     assert_eq!(s, Some("HE"));
     /// }
-    /// assert_eq!("HEllo", v);
+    /// assert_eq!(v, "HEllo");
     /// ```
     #[inline]
     pub fn get_mut<I: SliceIndex<StringBase<[u8]>>>(&mut self, i: I) -> Option<&mut I::Output> where T: AsMut<[u8]> {
@@ -697,11 +759,12 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
     /// # Examples
     ///
     /// ```
+    /// # use cursed_strings::String;
     /// let v = "🗻∈🌏";
     /// unsafe {
-    ///     assert_eq!("🗻", v.get_unchecked(0..4));
-    ///     assert_eq!("∈", v.get_unchecked(4..7));
-    ///     assert_eq!("🌏", v.get_unchecked(7..11));
+    ///     assert_eq!(v.get_unchecked(0..4), "🗻");
+    ///     assert_eq!(v.get_unchecked(4..7), "∈");
+    ///     assert_eq!(v.get_unchecked(7..11), "🌏");
     /// }
     /// ```
     #[inline]
@@ -731,11 +794,12 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
     /// # Examples
     ///
     /// ```
+    /// # use cursed_strings::String;
     /// let mut v = String::from("🗻∈🌏");
     /// unsafe {
-    ///     assert_eq!("🗻", v.get_unchecked_mut(0..4));
-    ///     assert_eq!("∈", v.get_unchecked_mut(4..7));
-    ///     assert_eq!("🌏", v.get_unchecked_mut(7..11));
+    ///     assert_eq!(v.get_unchecked_mut(0..4), "🗻");
+    ///     assert_eq!(v.get_unchecked_mut(4..7), "∈");
+    ///     assert_eq!(v.get_unchecked_mut(7..11), "🌏");
     /// }
     /// ```
     #[inline]
@@ -769,12 +833,13 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
     /// Basic usage:
     ///
     /// ```
-    /// let s = "Per Martin-Löf";
+    /// # use cursed_strings::str;
+    /// let s: &str = "Per Martin-Löf".into();
     ///
     /// let (first, last) = s.split_at(3);
     ///
-    /// assert_eq!("Per", first);
-    /// assert_eq!(" Martin-Löf", last);
+    /// assert_eq!(first, "Per");
+    /// assert_eq!(last, " Martin-Löf");
     /// ```
     #[inline]
     pub fn split_at(&self, mid: usize) -> (&StringBase<[u8]>, &StringBase<[u8]>) {
@@ -799,7 +864,6 @@ impl<T: ?Sized + AsRef<[u8]>> StringBase<T> {
         }
     }
 }
-
 
 #[inline(never)]
 #[cold]

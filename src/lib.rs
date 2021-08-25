@@ -1,14 +1,14 @@
 //! The one and only string type in Rust
 //!
 //! ```
-//! # use cursed_strings::str; use std::ops::Deref;
+//! # use cursed_strings::str;
 //! let foo: &str = "foo".into();
 //! let expected: &str = "foobar".into();
 //!
 //! let mut foobar = foo.to_owned();
 //! foobar.push_str("bar".into());
 //!
-//! assert_eq!(foobar.deref(), expected);
+//! assert_eq!(foobar, *expected);
 //! ```
 #![feature(str_internals)]
 #![feature(vec_into_raw_parts)]
@@ -28,6 +28,9 @@ pub mod chars;
 mod validation;
 mod traits;
 mod slice_index;
+mod convert;
+
+pub use convert::*;
 
 #[allow(non_camel_case_types)]
 pub type str = string_base::StringBase<[u8]>;
@@ -35,8 +38,6 @@ pub type String<A = Global> = string_base::StringBase<HeapVec<u8, A>>;
 
 #[cfg(test)]
 mod tests {
-    use std::ops::Deref;
-
     use crate::str;
 
     #[test]
@@ -47,6 +48,6 @@ mod tests {
         let mut foobar = foo.to_owned();
         foobar.push_str("bar".into());
 
-        assert_eq!(foobar.deref(), expected);
+        assert_eq!(foobar, *expected);
     }
 }
