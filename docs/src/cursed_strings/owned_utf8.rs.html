@@ -827,7 +827,7 @@
     <span class="ident">error</span>: <span class="ident">Utf8Error</span>,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Storage</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">StringBase</span><span class="op">&lt;</span><span class="ident">GenericVec</span><span class="op">&lt;</span><span class="ident">u8</span>, <span class="ident">S</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Storage</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">OwnedString</span><span class="op">&lt;</span><span class="ident">u8</span>, <span class="ident">S</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Converts a vector of bytes to a `String`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// A string ([`String`]) is made of bytes ([`u8`]), and a vector of bytes</span>

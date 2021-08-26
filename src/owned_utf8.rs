@@ -133,7 +133,7 @@ pub struct FromUtf8Error {
     error: Utf8Error,
 }
 
-impl<S: ?Sized + Storage<u8>> StringBase<GenericVec<u8, S>> {
+impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
     /// Converts a vector of bytes to a `String`.
     ///
     /// A string ([`String`]) is made of bytes ([`u8`]), and a vector of bytes

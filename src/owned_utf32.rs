@@ -125,7 +125,7 @@ impl<const N: usize> ArrayString32<N> {
     }
 }
 
-impl<S: ?Sized + Storage<char>> StringBase<GenericVec<char, S>> {
+impl<S: ?Sized + Storage<char>> OwnedString<char, S> {
     /// Appends a given string slice onto the end of this `String`.
     ///
     /// # Examples
