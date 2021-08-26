@@ -178,15 +178,6 @@
 <span id="178">178</span>
 <span id="179">179</span>
 <span id="180">180</span>
-<span id="181">181</span>
-<span id="182">182</span>
-<span id="183">183</span>
-<span id="184">184</span>
-<span id="185">185</span>
-<span id="186">186</span>
-<span id="187">187</span>
-<span id="188">188</span>
-<span id="189">189</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::str::Utf8Error</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::string_base::StringBase</span>;
@@ -229,26 +220,23 @@
 <span class="doccomment">/// Basic usage:</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// ```</span>
-<span class="doccomment">/// use cursed_strings as str;</span>
-<span class="doccomment">///</span>
+<span class="doccomment">/// # use cursed_strings::str;</span>
 <span class="doccomment">/// // some bytes, in a vector</span>
 <span class="doccomment">/// let sparkle_heart = vec![240, 159, 146, 150];</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// // We know these bytes are valid, so just use `unwrap()`.</span>
-<span class="doccomment">/// let sparkle_heart = str::from_utf8(&amp;sparkle_heart).unwrap();</span>
+<span class="doccomment">/// let sparkle_heart = cursed_strings::from_utf8(&amp;sparkle_heart).unwrap();</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// assert_eq!(sparkle_heart, &quot;💖&quot;);</span>
+<span class="doccomment">/// assert_eq!(sparkle_heart, &lt;&amp;str&gt;::from(&quot;💖&quot;));</span>
 <span class="doccomment">/// ```</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// Incorrect bytes:</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// ```</span>
-<span class="doccomment">/// use cursed_strings as str;</span>
-<span class="doccomment">///</span>
 <span class="doccomment">/// // some invalid bytes, in a vector</span>
 <span class="doccomment">/// let sparkle_heart = vec![0, 159, 146, 150];</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// assert!(str::from_utf8(&amp;sparkle_heart).is_err());</span>
+<span class="doccomment">/// assert!(cursed_strings::from_utf8(&amp;sparkle_heart).is_err());</span>
 <span class="doccomment">/// ```</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// See the docs for [`Utf8Error`] for more details on the kinds of</span>
@@ -257,15 +245,14 @@
 <span class="doccomment">/// A &quot;stack allocated string&quot;:</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// ```</span>
-<span class="doccomment">/// use cursed_strings as str;</span>
-<span class="doccomment">///</span>
+<span class="doccomment">/// # use cursed_strings::str;</span>
 <span class="doccomment">/// // some bytes, in a stack-allocated array</span>
 <span class="doccomment">/// let sparkle_heart = [240, 159, 146, 150];</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// // We know these bytes are valid, so just use `unwrap()`.</span>
-<span class="doccomment">/// let sparkle_heart = str::from_utf8(&amp;sparkle_heart).unwrap();</span>
+<span class="doccomment">/// let sparkle_heart = cursed_strings::from_utf8(&amp;sparkle_heart).unwrap();</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// assert_eq!(sparkle_heart, &quot;💖&quot;);</span>
+<span class="doccomment">/// assert_eq!(sparkle_heart, &lt;&amp;str&gt;::from(&quot;💖&quot;));</span>
 <span class="doccomment">/// ```</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_utf8</span>(<span class="ident">v</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">StringBase</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>, <span class="ident">Utf8Error</span><span class="op">&gt;</span> {
     <span class="prelude-val">Ok</span>(<span class="ident">std::str::from_utf8</span>(<span class="ident">v</span>)<span class="question-mark">?</span>.<span class="ident">into</span>())
@@ -278,26 +265,23 @@
 <span class="doccomment">/// Basic usage:</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// ```</span>
-<span class="doccomment">/// use cursed_strings as str;</span>
-<span class="doccomment">///</span>
+<span class="doccomment">/// # use cursed_strings::str;</span>
 <span class="doccomment">/// // &quot;Hello, Rust!&quot; as a mutable vector</span>
 <span class="doccomment">/// let mut hellorust = vec![72, 101, 108, 108, 111, 44, 32, 82, 117, 115, 116, 33];</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// // As we know these bytes are valid, we can use `unwrap()`</span>
-<span class="doccomment">/// let outstr = str::from_utf8_mut(&amp;mut hellorust).unwrap();</span>
+<span class="doccomment">/// let outstr = cursed_strings::from_utf8_mut(&amp;mut hellorust).unwrap();</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// assert_eq!(outstr, &quot;Hello, Rust!&quot;);</span>
+<span class="doccomment">/// assert_eq!(outstr, &lt;&amp;str&gt;::from(&quot;Hello, Rust!&quot;));</span>
 <span class="doccomment">/// ```</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// Incorrect bytes:</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// ```</span>
-<span class="doccomment">/// use cursed_strings as str;</span>
-<span class="doccomment">///</span>
 <span class="doccomment">/// // Some invalid bytes in a mutable vector</span>
 <span class="doccomment">/// let mut invalid = vec![128, 223];</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// assert!(str::from_utf8_mut(&amp;mut invalid).is_err());</span>
+<span class="doccomment">/// assert!(cursed_strings::from_utf8_mut(&amp;mut invalid).is_err());</span>
 <span class="doccomment">/// ```</span>
 <span class="doccomment">/// See the docs for [`Utf8Error`] for more details on the kinds of</span>
 <span class="doccomment">/// errors that can be returned.</span>
@@ -323,16 +307,15 @@
 <span class="doccomment">/// Basic usage:</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// ```</span>
-<span class="doccomment">/// use cursed_strings as str;</span>
-<span class="doccomment">///</span>
+<span class="doccomment">/// # use cursed_strings::str;</span>
 <span class="doccomment">/// // some bytes, in a vector</span>
 <span class="doccomment">/// let sparkle_heart = vec![240, 159, 146, 150];</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// let sparkle_heart = unsafe {</span>
-<span class="doccomment">///     str::from_utf8_unchecked(&amp;sparkle_heart)</span>
+<span class="doccomment">///     cursed_strings::from_utf8_unchecked(&amp;sparkle_heart)</span>
 <span class="doccomment">/// };</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// assert_eq!(sparkle_heart, &quot;💖&quot;);</span>
+<span class="doccomment">/// assert_eq!(sparkle_heart, &lt;&amp;str&gt;::from(&quot;💖&quot;));</span>
 <span class="doccomment">/// ```</span>
 <span class="attribute">#[<span class="ident">inline</span>]</span>
 <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">from_utf8_unchecked</span>(<span class="ident">v</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">StringBase</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> {
@@ -359,16 +342,15 @@
 <span class="doccomment">/// Basic usage:</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// ```</span>
-<span class="doccomment">/// use cursed_strings as str;</span>
-<span class="doccomment">///</span>
+<span class="doccomment">/// # use cursed_strings::str;</span>
 <span class="doccomment">/// // some bytes, in a vector</span>
 <span class="doccomment">/// let sparkle_heart = vec![240, 159, 146, 150];</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// let sparkle_heart = unsafe {</span>
-<span class="doccomment">///     str::from_utf8_unchecked(&amp;sparkle_heart)</span>
+<span class="doccomment">///     cursed_strings::from_utf8_unchecked(&amp;sparkle_heart)</span>
 <span class="doccomment">/// };</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// assert_eq!(sparkle_heart, &quot;💖&quot;);</span>
+<span class="doccomment">/// assert_eq!(sparkle_heart, &lt;&amp;str&gt;::from(&quot;💖&quot;));</span>
 <span class="doccomment">/// ```</span>
 <span class="attribute">#[<span class="ident">inline</span>]</span>
 <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">from_utf8_unchecked_mut</span>(<span class="ident">v</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">StringBase</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> {

@@ -1,13 +1,16 @@
+use core::unicode::conversions;
 use std::{
     slice::SliceIndex,
     str::{Bytes, CharIndices, Chars},
 };
 
-use crate::{
-    from_utf8_unchecked_mut, string_base::StringBase, validation::truncate_to_char_boundary,
-};
+use crate::{StringSlice, from_utf8_unchecked_mut, validation::truncate_to_char_boundary};
 
-impl<S: ?Sized + AsRef<[u8]>> StringBase<S> {
+#[allow(non_camel_case_types)]
+/// Exactly the same as [`std::primitive::str`], except generic
+pub type str = StringSlice<u8>;
+
+impl str {
     /// Returns the length of `self`.
     ///
     /// This length is in bytes, not [`char`]s or graphemes. In other words,
@@ -146,7 +149,7 @@ impl<S: ?Sized + AsRef<[u8]>> StringBase<S> {
     /// Mutability:
     ///
     /// ```
-    /// # use cursed_strings::String;
+    /// # use cursed_strings::{str, String};
     /// let mut s = String::from("🗻∈🌏");
     ///
     /// unsafe {
@@ -158,13 +161,10 @@ impl<S: ?Sized + AsRef<[u8]>> StringBase<S> {
     ///     bytes[3] = 0x94;
     /// }
     ///
-    /// assert_eq!(s, "🍔∈🌏");
+    /// assert_eq!(s, <&str>::from("🍔∈🌏"));
     /// ```
     #[inline(always)]
-    pub unsafe fn as_bytes_mut(&mut self) -> &mut [u8]
-    where
-        S: AsMut<[u8]>,
-    {
+    pub unsafe fn as_bytes_mut(&mut self) -> &mut [u8] {
         // SAFETY: const sound because we transmute two types with the same layout
         std::mem::transmute(self.storage.as_mut())
     }
@@ -203,10 +203,7 @@ impl<S: ?Sized + AsRef<[u8]>> StringBase<S> {
     /// It is your responsibility to make sure that the string slice only gets
     /// modified in a way that it remains valid UTF-8.
     #[inline]
-    pub fn as_mut_ptr(&mut self) -> *mut u8
-    where
-        S: AsMut<[u8]>,
-    {
+    pub fn as_mut_ptr(&mut self) -> *mut u8 {
         self.storage.as_mut() as *mut [u8] as *mut u8
     }
 
@@ -231,7 +228,7 @@ impl<S: ?Sized + AsRef<[u8]>> StringBase<S> {
     /// assert!(v.get(..42).is_none());
     /// ```
     #[inline]
-    pub fn get<I: SliceIndex<StringBase<[u8]>>>(&self, i: I) -> Option<&I::Output> {
+    pub fn get<I: SliceIndex<Self>>(&self, i: I) -> Option<&I::Output> {
         i.get(self.as_ref())
     }
 
@@ -251,7 +248,7 @@ impl<S: ?Sized + AsRef<[u8]>> StringBase<S> {
     /// assert!(v.get_mut(..42).is_none());
     /// assert_eq!(v.get_mut(0..2).map(|v| &*v), Some(<&str>::from("he")));
     ///
-    /// assert_eq!(v, "hello");
+    /// assert_eq!(v, <&str>::from("hello"));
     /// {
     ///     let s = v.get_mut(0..2);
     ///     let s = s.map(|s| {
@@ -260,13 +257,10 @@ impl<S: ?Sized + AsRef<[u8]>> StringBase<S> {
     ///     });
     ///     assert_eq!(s, Some(<&str>::from("HE")));
     /// }
-    /// assert_eq!(v, "HEllo");
+    /// assert_eq!(v, <&str>::from("HEllo"));
     /// ```
     #[inline]
-    pub fn get_mut<I: SliceIndex<StringBase<[u8]>>>(&mut self, i: I) -> Option<&mut I::Output>
-    where
-        S: AsMut<[u8]>,
-    {
+    pub fn get_mut<I: SliceIndex<Self>>(&mut self, i: I) -> Option<&mut I::Output> {
         i.get_mut(self.as_mut())
     }
 
@@ -289,16 +283,16 @@ impl<S: ?Sized + AsRef<[u8]>> StringBase<S> {
     /// # Examples
     ///
     /// ```
-    /// # use cursed_strings::String;
-    /// let v = "🗻∈🌏";
+    /// # use cursed_strings::str;
+    /// let v = <&str>::from("🗻∈🌏");
     /// unsafe {
-    ///     assert_eq!(v.get_unchecked(0..4), "🗻");
-    ///     assert_eq!(v.get_unchecked(4..7), "∈");
-    ///     assert_eq!(v.get_unchecked(7..11), "🌏");
+    ///     assert_eq!(v.get_unchecked(0..4), <&str>::from("🗻"));
+    ///     assert_eq!(v.get_unchecked(4..7), <&str>::from("∈"));
+    ///     assert_eq!(v.get_unchecked(7..11), <&str>::from("🌏"));
     /// }
     /// ```
     #[inline]
-    pub unsafe fn get_unchecked<I: SliceIndex<StringBase<[u8]>>>(&self, i: I) -> &I::Output {
+    pub unsafe fn get_unchecked<I: SliceIndex<Self>>(&self, i: I) -> &I::Output {
         // SAFETY: the caller must uphold the safety contract for `get_unchecked`;
         // the slice is dereferencable because `self` is a safe reference.
         // The returned pointer is safe because impls of `SliceIndex` have to guarantee that it is.
@@ -324,22 +318,19 @@ impl<S: ?Sized + AsRef<[u8]>> StringBase<S> {
     /// # Examples
     ///
     /// ```
-    /// # use cursed_strings::String;
+    /// # use cursed_strings::{str, String};
     /// let mut v = String::from("🗻∈🌏");
     /// unsafe {
-    ///     assert_eq!(v.get_unchecked_mut(0..4), "🗻");
-    ///     assert_eq!(v.get_unchecked_mut(4..7), "∈");
-    ///     assert_eq!(v.get_unchecked_mut(7..11), "🌏");
+    ///     assert_eq!(v.get_unchecked_mut(0..4), <&str>::from("🗻"));
+    ///     assert_eq!(v.get_unchecked_mut(4..7), <&str>::from("∈"));
+    ///     assert_eq!(v.get_unchecked_mut(7..11), <&str>::from("🌏"));
     /// }
     /// ```
     #[inline]
-    pub unsafe fn get_unchecked_mut<I: SliceIndex<StringBase<[u8]>>>(
+    pub unsafe fn get_unchecked_mut<I: SliceIndex<Self>>(
         &mut self,
         i: I,
-    ) -> &mut I::Output
-    where
-        S: AsMut<[u8]>,
-    {
+    ) -> &mut I::Output {
         // SAFETY: the caller must uphold the safety contract for `get_unchecked_mut`;
         // the slice is dereferencable because `self` is a safe reference.
         // The returned pointer is safe because impls of `SliceIndex` have to guarantee that it is.
@@ -374,11 +365,11 @@ impl<S: ?Sized + AsRef<[u8]>> StringBase<S> {
     ///
     /// let (first, last) = s.split_at(3);
     ///
-    /// assert_eq!(first, "Per");
-    /// assert_eq!(last, " Martin-Löf");
+    /// assert_eq!(first, <&str>::from("Per"));
+    /// assert_eq!(last, <&str>::from(" Martin-Löf"));
     /// ```
     #[inline]
-    pub fn split_at(&self, mid: usize) -> (&StringBase<[u8]>, &StringBase<[u8]>) {
+    pub fn split_at(&self, mid: usize) -> (&Self, &Self) {
         // is_char_boundary checks that the index is in [0, .len()]
         if self.is_char_boundary(mid) {
             // SAFETY: just checked that `mid` is on a char boundary.
@@ -403,7 +394,7 @@ impl<S: ?Sized + AsRef<[u8]>> StringBase<S> {
     ///
     /// To get immutable string slices instead, see the [`split_at`] method.
     ///
-    /// [`split_at`]: StringBase::split_at
+    /// [`split_at`]: str::split_at
     ///
     /// # Panics
     ///
@@ -415,21 +406,18 @@ impl<S: ?Sized + AsRef<[u8]>> StringBase<S> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::String;
+    /// # use cursed_strings::{str, String};
     /// let mut s = String::from("Per Martin-Löf");
     /// {
     ///     let (first, last) = s.split_at_mut(3);
     ///     first.make_ascii_uppercase();
-    ///     assert_eq!(first, "PER");
-    ///     assert_eq!(last, " Martin-Löf");
+    ///     assert_eq!(first, <&str>::from("PER"));
+    ///     assert_eq!(last, <&str>::from(" Martin-Löf"));
     /// }
-    /// assert_eq!(s, "PER Martin-Löf");
+    /// assert_eq!(s, <&str>::from("PER Martin-Löf"));
     /// ```
     #[inline]
-    pub fn split_at_mut(&mut self, mid: usize) -> (&mut StringBase<[u8]>, &mut StringBase<[u8]>)
-    where
-        S: AsMut<[u8]>,
-    {
+    pub fn split_at_mut(&mut self, mid: usize) -> (&mut Self, &mut Self) {
         // is_char_boundary checks that the index is in [0, .len()]
         if self.is_char_boundary(mid) {
             let len = self.len();
@@ -499,11 +487,11 @@ impl<S: ?Sized + AsRef<[u8]>> StringBase<S> {
     /// ```
     #[inline]
     pub fn chars(&self) -> Chars<'_> {
-        let s: &str = self.into();
+        let s: &std::primitive::str = self.into();
         s.chars()
     }
     pub fn char_indices(&self) -> CharIndices<'_> {
-        let s: &str = self.into();
+        let s: &std::primitive::str = self.into();
         s.char_indices()
     }
 
@@ -529,7 +517,7 @@ impl<S: ?Sized + AsRef<[u8]>> StringBase<S> {
     /// ```
     #[inline]
     pub fn bytes(&self) -> Bytes<'_> {
-        let s: &str = self.into();
+        let s: &std::primitive::str = self.into();
         s.bytes()
     }
 
@@ -567,7 +555,7 @@ impl<S: ?Sized + AsRef<[u8]>> StringBase<S> {
     /// assert!(!<&str>::from("Ferrös").eq_ignore_ascii_case("FERRÖS".into()));
     /// ```
     #[inline]
-    pub fn eq_ignore_ascii_case(&self, other: &StringBase<[u8]>) -> bool {
+    pub fn eq_ignore_ascii_case(&self, other: &Self) -> bool {
         self.as_bytes().eq_ignore_ascii_case(other.as_bytes())
     }
 
@@ -584,18 +572,15 @@ impl<S: ?Sized + AsRef<[u8]>> StringBase<S> {
     /// # Examples
     ///
     /// ```
-    /// # use cursed_strings::String;
+    /// # use cursed_strings::{str, String};
     /// let mut s = String::from("Grüße, Jürgen ❤");
     ///
     /// s.make_ascii_uppercase();
     ///
-    /// assert_eq!(s, "GRüßE, JüRGEN ❤");
+    /// assert_eq!(s, <&str>::from("GRüßE, JüRGEN ❤"));
     /// ```
     #[inline]
-    pub fn make_ascii_uppercase(&mut self)
-    where
-        S: AsMut<[u8]>,
-    {
+    pub fn make_ascii_uppercase(&mut self) {
         // SAFETY: safe because we transmute two types with the same layout.
         let me = unsafe { self.as_bytes_mut() };
         me.make_ascii_uppercase()
@@ -614,28 +599,168 @@ impl<S: ?Sized + AsRef<[u8]>> StringBase<S> {
     /// # Examples
     ///
     /// ```
-    /// # use cursed_strings::String;
+    /// # use cursed_strings::{str, String};
     /// let mut s = String::from("GRÜßE, JÜRGEN ❤");
     ///
     /// s.make_ascii_lowercase();
     ///
-    /// assert_eq!(s, "grÜße, jÜrgen ❤");
+    /// assert_eq!(s, <&str>::from("grÜße, jÜrgen ❤"));
     /// ```
     #[inline]
-    pub fn make_ascii_lowercase(&mut self)
-    where
-        S: AsMut<[u8]>,
-    {
+    pub fn make_ascii_lowercase(&mut self) {
         // SAFETY: safe because we transmute two types with the same layout.
         let me = unsafe { self.as_bytes_mut() };
         me.make_ascii_lowercase()
+    }
+
+
+    /// Returns the lowercase equivalent of this string slice, as a new [`String`].
+    ///
+    /// 'Lowercase' is defined according to the terms of the Unicode Derived Core Property
+    /// `Lowercase`.
+    ///
+    /// Since some characters can expand into multiple characters when changing
+    /// the case, this function returns a [`String`] instead of modifying the
+    /// parameter in-place.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// # use cursed_strings::str;
+    /// let s = <&str>::from("HELLO");
+    ///
+    /// assert_eq!(s.to_lowercase(), <&str>::from("hello"));
+    /// ```
+    ///
+    /// A tricky example, with sigma:
+    ///
+    /// ```
+    /// # use cursed_strings::str;
+    /// let sigma = <&str>::from("Σ");
+    ///
+    /// assert_eq!(sigma.to_lowercase(), <&str>::from("σ"));
+    ///
+    /// // but at the end of a word, it's ς, not σ:
+    /// let odysseus = <&str>::from("ὈΔΥΣΣΕΎΣ");
+    ///
+    /// assert_eq!(odysseus.to_lowercase(), <&str>::from("ὀδυσσεύς"));
+    /// ```
+    ///
+    /// Languages without case are not changed:
+    ///
+    /// ```
+    /// # use cursed_strings::str;
+    /// let new_year = <&str>::from("农历新年");
+    ///
+    /// assert_eq!(new_year, new_year.to_lowercase());
+    /// ```
+    pub fn to_lowercase(&self) -> crate::String {
+        let mut s = crate::String::with_capacity(self.len());
+        for (i, c) in self[..].char_indices() {
+            if c == 'Σ' {
+                // Σ maps to σ, except at the end of a word where it maps to ς.
+                // This is the only conditional (contextual) but language-independent mapping
+                // in `SpecialCasing.txt`,
+                // so hard-code it rather than have a generic "condition" mechanism.
+                // See https://github.com/rust-lang/rust/issues/26035
+                map_uppercase_sigma(self, i, &mut s)
+            } else {
+                match conversions::to_lower(c) {
+                    [a, '\0', _] => s.push(a),
+                    [a, b, '\0'] => {
+                        s.push(a);
+                        s.push(b);
+                    }
+                    [a, b, c] => {
+                        s.push(a);
+                        s.push(b);
+                        s.push(c);
+                    }
+                }
+            }
+        }
+        return s;
+
+        fn map_uppercase_sigma(from: &str, i: usize, to: &mut crate::String) {
+            // See http://www.unicode.org/versions/Unicode7.0.0/ch03.pdf#G33992
+            // for the definition of `Final_Sigma`.
+            debug_assert!('Σ'.len_utf8() == 2);
+            let is_word_final = case_ignoreable_then_cased(from[..i].chars().rev())
+                && !case_ignoreable_then_cased(from[i + 2..].chars());
+            to.push_str(if is_word_final { "ς" } else { "σ" }.into());
+        }
+
+        fn case_ignoreable_then_cased<I: Iterator<Item = char>>(iter: I) -> bool {
+            use core::unicode::{Case_Ignorable, Cased};
+            match iter.skip_while(|&c| Case_Ignorable(c)).next() {
+                Some(c) => Cased(c),
+                None => false,
+            }
+        }
+    }
+
+    /// Returns the uppercase equivalent of this string slice, as a new [`String`].
+    ///
+    /// 'Uppercase' is defined according to the terms of the Unicode Derived Core Property
+    /// `Uppercase`.
+    ///
+    /// Since some characters can expand into multiple characters when changing
+    /// the case, this function returns a [`String`] instead of modifying the
+    /// parameter in-place.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// # use cursed_strings::str;
+    /// let s = <&str>::from("hello");
+    ///
+    /// assert_eq!(s.to_uppercase(), <&str>::from("HELLO"));
+    /// ```
+    ///
+    /// Scripts without case are not changed:
+    ///
+    /// ```
+    /// # use cursed_strings::str;
+    /// let new_year = <&str>::from("农历新年");
+    ///
+    /// assert_eq!(new_year, new_year.to_uppercase());
+    /// ```
+    ///
+    /// One character can become multiple:
+    /// ```
+    /// # use cursed_strings::str;
+    /// let s = <&str>::from("tschüß");
+    ///
+    /// assert_eq!(s.to_uppercase(), <&str>::from("TSCHÜSS"));
+    /// ```
+    pub fn to_uppercase(&self) -> crate::String {
+        let mut s = crate::String::with_capacity(self.len());
+        for c in self[..].chars() {
+            match conversions::to_upper(c) {
+                [a, '\0', _] => s.push(a),
+                [a, b, '\0'] => {
+                    s.push(a);
+                    s.push(b);
+                }
+                [a, b, c] => {
+                    s.push(a);
+                    s.push(b);
+                    s.push(c);
+                }
+            }
+        }
+        s
     }
 }
 
 #[inline(never)]
 #[cold]
 #[track_caller]
-pub(crate) fn slice_error_fail(s: &StringBase<[u8]>, begin: usize, end: usize) -> ! {
+pub(crate) fn slice_error_fail(s: &str, begin: usize, end: usize) -> ! {
     const MAX_DISPLAY_LENGTH: usize = 256;
     let (truncated, s_trunc) = truncate_to_char_boundary(s, MAX_DISPLAY_LENGTH);
     let ellipsis = if truncated { "[...]" } else { "" };

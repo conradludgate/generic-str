@@ -1,6 +1,9 @@
-use std::alloc::{Allocator, Global};
+use std::{alloc::Allocator, borrow::Borrow, cmp::Ordering};
 
-use generic_vec::{raw::Heap, ArrayVec, HeapVec};
+use generic_vec::{
+    raw::{Storage, StorageWithCapacity},
+    GenericVec, HeapVec,
+};
 
 #[derive(Default, Copy, Clone)]
 #[repr(transparent)]
@@ -8,62 +11,18 @@ pub struct StringBase<S: ?Sized> {
     pub(crate) storage: S,
 }
 
-#[allow(non_camel_case_types)]
-/// Exactly the same as [`std::str`], except generic
-pub type str = StringBase<[u8]>;
-
-/// Exactly the same as [`std::string::String`], except generic
-///
-/// ```
-/// # use cursed_strings::String;
-/// let mut s = String::new();
-/// s.push_str("foobar".into());
-/// assert_eq!(s, "foobar");
-/// ```
-pub type String<A = Global> = StringBase<HeapVec<u8, A>>;
-
-/// Same API as [`String`] but without any re-allocation. Can only hold up to `N` bytes
-///
-/// ```
-/// # use cursed_strings::ArrayString;
-/// let mut s = ArrayString::<8>::new();
-/// assert_eq!(std::mem::size_of_val(&s), 8 + 8); // 8 bytes of storage, 8 bytes for length
-///
-/// s.push_str("foo".into());
-/// let t = s.clone(); // cloning requires no heap allocations
-/// s.push_str("bar".into());
-///
-/// assert_eq!(t, "foo");
-/// assert_eq!(s, "foobar");
-/// ```
-pub type ArrayString<const N: usize> = StringBase<ArrayVec<u8, N>>;
-
-impl crate::String {
-    /// Creates a new empty `String`.
-    ///
-    /// Given that the `String` is empty, this will not allocate any initial
-    /// buffer. While that means that this initial operation is very
-    /// inexpensive, it may cause excessive allocation later when you add
-    /// data. If you have an idea of how much data the `String` will hold,
-    /// consider the [`with_capacity`] method to prevent excessive
-    /// re-allocation.
-    ///
-    /// [`with_capacity`]: StringBase::with_capacity
-    ///
-    /// # Examples
-    ///
-    /// Basic usage:
-    ///
-    /// ```
-    /// # use cursed_strings::String;
-    /// let s = String::new();
-    /// ```
+impl<S: StorageWithCapacity<T>, T> StringBase<GenericVec<T, S>> {
     #[inline]
-    pub const fn new() -> Self {
-        Self::with_storage(Heap::new())
+    pub fn new_with_capacity(capacity: usize) -> Self {
+        Self::with_storage(S::with_capacity(capacity))
     }
+}
 
-    /// Creates a new empty `String` with a particular capacity.
+pub type OwnedString<U, S> = StringBase<GenericVec<U, S>>;
+pub type StringSlice<U> = StringBase<[U]>;
+
+impl<S: ?Sized + Storage<T>, T> StringBase<GenericVec<T, S>> {
+    /// Creates a new empty `String` with a particular storage backend.
     ///
     /// `String`s have an internal buffer to hold their data. The capacity is
     /// the length of that buffer, and can be queried with the [`capacity`]
@@ -102,32 +61,170 @@ impl crate::String {
     /// s.push('a');
     /// ```
     #[inline]
-    pub fn with_capacity(capacity: usize) -> Self {
-        Self::new_with_capacity(capacity)
-    }
-}
-
-impl<A: Allocator> crate::String<A> {
-    pub fn with_alloc(alloc: A) -> Self {
-        Self::with_storage(Heap::with_alloc(alloc))
-    }
-}
-
-impl<const N: usize> crate::ArrayString<N> {
-    /// Creates a new empty `ArrayString`.
-    ///
-    /// # Examples
-    ///
-    /// Basic usage:
-    ///
-    /// ```
-    /// # use cursed_strings::ArrayString;
-    /// let s = ArrayString::<8>::new();
-    /// ```
-    #[inline]
-    pub const fn new() -> Self {
-        Self {
-            storage: ArrayVec::new(),
+    pub const fn with_storage(storage: S) -> Self
+    where
+        S: Sized,
+    {
+        StringBase {
+            storage: GenericVec::with_storage(storage),
         }
+    }
+}
+
+impl<T: ?Sized + std::ops::Deref> std::ops::Deref for StringBase<T> {
+    type Target = StringBase<T::Target>;
+
+    fn deref(&self) -> &StringBase<T::Target> {
+        unsafe { std::mem::transmute::<&T::Target, &StringBase<T::Target>>(self.storage.deref()) }
+    }
+}
+
+impl<T: ?Sized + std::ops::DerefMut> std::ops::DerefMut for StringBase<T> {
+    fn deref_mut(&mut self) -> &mut StringBase<T::Target> {
+        unsafe {
+            std::mem::transmute::<&mut T::Target, &mut StringBase<T::Target>>(
+                self.storage.deref_mut(),
+            )
+        }
+    }
+}
+
+impl<T: ?Sized + AsRef<U>, U: ?Sized> AsRef<StringBase<U>> for StringBase<T> {
+    fn as_ref(&self) -> &StringBase<U> {
+        unsafe { std::mem::transmute::<&U, &StringBase<U>>(self.storage.as_ref()) }
+    }
+}
+
+impl<T: ?Sized + AsMut<U>, U: ?Sized> AsMut<StringBase<U>> for StringBase<T> {
+    fn as_mut(&mut self) -> &mut StringBase<U> {
+        unsafe { std::mem::transmute::<&mut U, &mut StringBase<U>>(self.storage.as_mut()) }
+    }
+}
+
+impl<T, A: Allocator> Borrow<StringBase<[T]>> for StringBase<HeapVec<T, A>> {
+    fn borrow(&self) -> &StringBase<[T]> {
+        unsafe { std::mem::transmute::<&[T], &StringBase<[T]>>(self.storage.borrow()) }
+    }
+}
+
+impl<T: Clone> ToOwned for StringBase<[T]> {
+    type Owned = StringBase<HeapVec<T>>;
+
+    fn to_owned(&self) -> Self::Owned {
+        Self::Owned {
+            storage: self.storage.to_owned().into(),
+        }
+    }
+}
+
+impl<S: ?Sized + Storage<U>, T: ?Sized + Storage<U>, U> PartialEq<OwnedString<U, T>>
+    for StringBase<GenericVec<U, S>>
+where
+    GenericVec<U, S>: PartialEq<GenericVec<U, T>>,
+{
+    fn eq(&self, other: &OwnedString<U, T>) -> bool {
+        self.storage.eq(&other.storage)
+    }
+    fn ne(&self, other: &OwnedString<U, T>) -> bool {
+        self.storage.ne(&other.storage)
+    }
+}
+
+impl<S: ?Sized + Storage<U>, U: PartialEq> PartialEq<OwnedString<U, S>> for StringSlice<U> {
+    fn eq(&self, other: &OwnedString<U, S>) -> bool {
+        other.storage.eq(&self.storage)
+    }
+    fn ne(&self, other: &OwnedString<U, S>) -> bool {
+        other.storage.ne(&self.storage)
+    }
+}
+
+impl<S: ?Sized + Storage<U>, U: PartialEq> PartialEq<OwnedString<U, S>> for &StringSlice<U> {
+    fn eq(&self, other: &OwnedString<U, S>) -> bool {
+        other.storage.eq(&self.storage)
+    }
+    fn ne(&self, other: &OwnedString<U, S>) -> bool {
+        other.storage.ne(&self.storage)
+    }
+}
+
+impl<S: ?Sized + Storage<U>, U: PartialEq> PartialEq<StringSlice<U>> for OwnedString<U, S> {
+    fn eq(&self, other: &StringSlice<U>) -> bool {
+        self.storage.eq(&other.storage)
+    }
+    fn ne(&self, other: &StringSlice<U>) -> bool {
+        self.storage.ne(&other.storage)
+    }
+}
+
+impl<S: ?Sized + Storage<U>, U: PartialEq> PartialEq<&StringSlice<U>> for OwnedString<U, S> {
+    fn eq(&self, other: &&StringSlice<U>) -> bool {
+        self.storage.eq(&other.storage)
+    }
+    fn ne(&self, other: &&StringSlice<U>) -> bool {
+        self.storage.ne(&other.storage)
+    }
+}
+
+impl<U: PartialEq> PartialEq<StringSlice<U>> for StringSlice<U> {
+    fn eq(&self, other: &StringSlice<U>) -> bool {
+        self.storage.eq(&other.storage)
+    }
+    fn ne(&self, other: &StringSlice<U>) -> bool {
+        self.storage.ne(&other.storage)
+    }
+}
+
+impl<S: ?Sized + Storage<U>, U: Eq> Eq for OwnedString<U, S> {}
+impl<U: Eq> Eq for StringSlice<U> {}
+
+impl<S: ?Sized + Storage<U>, T: ?Sized + Storage<U>, U> PartialOrd<OwnedString<U, T>>
+    for StringBase<GenericVec<U, S>>
+where
+    GenericVec<U, S>: PartialOrd<GenericVec<U, T>>,
+{
+    fn partial_cmp(&self, other: &OwnedString<U, T>) -> Option<Ordering> {
+        self.storage.partial_cmp(&other.storage)
+    }
+}
+
+impl<S: ?Sized + Storage<U>, U: PartialOrd> PartialOrd<OwnedString<U, S>> for StringSlice<U> {
+    fn partial_cmp(&self, other: &OwnedString<U, S>) -> Option<Ordering> {
+        other.storage.partial_cmp(&self.storage)
+    }
+}
+
+impl<S: ?Sized + Storage<U>, U: PartialOrd> PartialOrd<OwnedString<U, S>> for &StringSlice<U> {
+    fn partial_cmp(&self, other: &OwnedString<U, S>) -> Option<Ordering> {
+        other.storage.partial_cmp(&self.storage)
+    }
+}
+
+impl<S: ?Sized + Storage<U>, U: PartialOrd> PartialOrd<StringSlice<U>> for OwnedString<U, S> {
+    fn partial_cmp(&self, other: &StringSlice<U>) -> Option<Ordering> {
+        self.storage.partial_cmp(&other.storage)
+    }
+}
+
+impl<S: ?Sized + Storage<U>, U: PartialOrd> PartialOrd<&StringSlice<U>> for OwnedString<U, S> {
+    fn partial_cmp(&self, other: &&StringSlice<U>) -> Option<Ordering> {
+        self.storage.partial_cmp(&other.storage)
+    }
+}
+
+impl<U: PartialOrd> PartialOrd<StringSlice<U>> for StringSlice<U> {
+    fn partial_cmp(&self, other: &StringSlice<U>) -> Option<Ordering> {
+        self.storage.partial_cmp(&other.storage)
+    }
+}
+
+impl<S: ?Sized + Storage<U>, U: Ord> Ord for OwnedString<U, S> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.storage.cmp(&other.storage)
+    }
+}
+impl<U: Ord> Ord for StringSlice<U> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.storage.cmp(&other.storage)
     }
 }

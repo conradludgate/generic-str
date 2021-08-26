@@ -627,30 +627,132 @@
 <span id="627">627</span>
 <span id="628">628</span>
 <span id="629">629</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::str::Utf8Error</span>;
-
-<span class="kw">use</span> <span class="ident">generic_vec</span>::{
-    <span class="ident">raw</span>::{<span class="ident">Storage</span>, <span class="ident">StorageWithCapacity</span>},
-    <span class="ident">GenericVec</span>,
+<span id="630">630</span>
+<span id="631">631</span>
+<span id="632">632</span>
+<span id="633">633</span>
+<span id="634">634</span>
+<span id="635">635</span>
+<span id="636">636</span>
+<span id="637">637</span>
+<span id="638">638</span>
+<span id="639">639</span>
+<span id="640">640</span>
+<span id="641">641</span>
+<span id="642">642</span>
+<span id="643">643</span>
+<span id="644">644</span>
+<span id="645">645</span>
+<span id="646">646</span>
+<span id="647">647</span>
+<span id="648">648</span>
+<span id="649">649</span>
+<span id="650">650</span>
+<span id="651">651</span>
+<span id="652">652</span>
+<span id="653">653</span>
+<span id="654">654</span>
+<span id="655">655</span>
+<span id="656">656</span>
+<span id="657">657</span>
+<span id="658">658</span>
+<span id="659">659</span>
+<span id="660">660</span>
+<span id="661">661</span>
+<span id="662">662</span>
+<span id="663">663</span>
+<span id="664">664</span>
+<span id="665">665</span>
+<span id="666">666</span>
+<span id="667">667</span>
+<span id="668">668</span>
+<span id="669">669</span>
+<span id="670">670</span>
+<span id="671">671</span>
+<span id="672">672</span>
+<span id="673">673</span>
+<span id="674">674</span>
+<span id="675">675</span>
+<span id="676">676</span>
+<span id="677">677</span>
+<span id="678">678</span>
+<span id="679">679</span>
+<span id="680">680</span>
+<span id="681">681</span>
+<span id="682">682</span>
+<span id="683">683</span>
+<span id="684">684</span>
+<span id="685">685</span>
+<span id="686">686</span>
+<span id="687">687</span>
+<span id="688">688</span>
+<span id="689">689</span>
+<span id="690">690</span>
+<span id="691">691</span>
+<span id="692">692</span>
+<span id="693">693</span>
+<span id="694">694</span>
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std</span>::{
+    <span class="ident">alloc</span>::{<span class="ident">Allocator</span>, <span class="ident">Global</span>},
+    <span class="ident">str::Utf8Error</span>,
 };
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::string_base::StringBase</span>;
+<span class="kw">use</span> <span class="ident">generic_vec</span>::{<span class="ident">ArrayVec</span>, <span class="ident">GenericVec</span>, <span class="ident">raw</span>::{<span class="ident">Heap</span>, <span class="ident">Storage</span>, <span class="ident">StorageWithCapacity</span>, <span class="ident">UninitBuffer</span>}};
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">FromUtf8Error</span> {
-    <span class="ident">bytes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
-    <span class="ident">error</span>: <span class="ident">Utf8Error</span>,
-}
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">OwnedString</span>, <span class="ident">string_base::StringBase</span>};
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">StorageWithCapacity</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">StringBase</span><span class="op">&lt;</span><span class="ident">GenericVec</span><span class="op">&lt;</span><span class="ident">u8</span>, <span class="ident">S</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+<span class="doccomment">/// Exactly the same as [`std::string::String`], except generic</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">/// # use cursed_strings::{str, String};</span>
+<span class="doccomment">/// let mut s = String::new();</span>
+<span class="doccomment">/// s.push_str(&quot;foobar&quot;.into());</span>
+<span class="doccomment">/// assert_eq!(s, &lt;&amp;str&gt;::from(&quot;foobar&quot;));</span>
+<span class="doccomment">/// ```</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">String</span><span class="op">&lt;</span><span class="ident">A</span> <span class="op">=</span> <span class="ident">Global</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">OwnedString</span><span class="op">&lt;</span><span class="ident">u8</span>, <span class="ident">Heap</span><span class="op">&lt;</span><span class="ident">u8</span>, <span class="ident">A</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+
+<span class="doccomment">/// Same API as [`String`] but without any re-allocation. Can only hold up to `N` bytes</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">/// # use cursed_strings::{str, ArrayString};</span>
+<span class="doccomment">/// let mut s = ArrayString::&lt;8&gt;::new();</span>
+<span class="doccomment">/// assert_eq!(std::mem::size_of_val(&amp;s), 8 + 8); // 8 bytes of storage, 8 bytes for length</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// s.push_str(&quot;foo&quot;.into());</span>
+<span class="doccomment">/// let t = s.clone(); // cloning requires no heap allocations</span>
+<span class="doccomment">/// s.push_str(&quot;bar&quot;.into());</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// assert_eq!(t, &lt;&amp;str&gt;::from(&quot;foo&quot;));</span>
+<span class="doccomment">/// assert_eq!(s, &lt;&amp;str&gt;::from(&quot;foobar&quot;));</span>
+<span class="doccomment">/// ```</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ArrayString</span><span class="op">&lt;</span><span class="kw">const</span> <span class="ident">N</span>: <span class="ident">usize</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">OwnedString</span><span class="op">&lt;</span><span class="ident">u8</span>, <span class="ident">UninitBuffer</span><span class="op">&lt;</span>[<span class="ident">u8</span>; <span class="ident">N</span>], <span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+
+<span class="kw">impl</span> <span class="ident">String</span> {
+    <span class="doccomment">/// Creates a new empty `String`.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Given that the `String` is empty, this will not allocate any initial</span>
+    <span class="doccomment">/// buffer. While that means that this initial operation is very</span>
+    <span class="doccomment">/// inexpensive, it may cause excessive allocation later when you add</span>
+    <span class="doccomment">/// data. If you have an idea of how much data the `String` will hold,</span>
+    <span class="doccomment">/// consider the [`with_capacity`] method to prevent excessive</span>
+    <span class="doccomment">/// re-allocation.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// [`with_capacity`]: String::with_capacity</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Basic usage:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// # use cursed_strings::String;</span>
+    <span class="doccomment">/// let s = String::new();</span>
+    <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_with_capacity</span>(<span class="ident">capacity</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="ident"><span class="self">Self</span>::with_storage</span>(<span class="ident">S::with_capacity</span>(<span class="ident">capacity</span>))
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="ident"><span class="self">Self</span>::with_storage</span>(<span class="ident">Heap::new</span>())
     }
-}
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Storage</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">StringBase</span><span class="op">&lt;</span><span class="ident">GenericVec</span><span class="op">&lt;</span><span class="ident">u8</span>, <span class="ident">S</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Creates a new empty `String` with a particular storage backend.</span>
+    <span class="doccomment">/// Creates a new empty `String` with a particular capacity.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// `String`s have an internal buffer to hold their data. The capacity is</span>
     <span class="doccomment">/// the length of that buffer, and can be queried with the [`capacity`]</span>
@@ -689,15 +791,43 @@
     <span class="doccomment">/// s.push(&#39;a&#39;);</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">with_storage</span>(<span class="ident">storage</span>: <span class="ident">S</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>
-    <span class="kw">where</span>
-        <span class="ident">S</span>: <span class="ident">Sized</span>,
-    {
-        <span class="ident">StringBase</span> {
-            <span class="ident">storage</span>: <span class="ident">GenericVec::with_storage</span>(<span class="ident">storage</span>),
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_capacity</span>(<span class="ident">capacity</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="ident"><span class="self">Self</span>::new_with_capacity</span>(<span class="ident">capacity</span>)
+    }
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Allocator</span><span class="op">&gt;</span> <span class="ident">String</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_alloc</span>(<span class="ident">alloc</span>: <span class="ident">A</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="ident"><span class="self">Self</span>::with_storage</span>(<span class="ident">Heap::with_alloc</span>(<span class="ident">alloc</span>))
+    }
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="kw">const</span> <span class="ident">N</span>: <span class="ident">usize</span><span class="op">&gt;</span> <span class="ident">ArrayString</span><span class="op">&lt;</span><span class="ident">N</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// Creates a new empty `ArrayString`.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Basic usage:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// # use cursed_strings::ArrayString;</span>
+    <span class="doccomment">/// let s = ArrayString::&lt;8&gt;::new();</span>
+    <span class="doccomment">/// ```</span>
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="self">Self</span> {
+            <span class="ident">storage</span>: <span class="ident">ArrayVec::new</span>(),
         }
     }
+}
 
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">FromUtf8Error</span> {
+    <span class="ident">bytes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
+    <span class="ident">error</span>: <span class="ident">Utf8Error</span>,
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Storage</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">StringBase</span><span class="op">&lt;</span><span class="ident">GenericVec</span><span class="op">&lt;</span><span class="ident">u8</span>, <span class="ident">S</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Converts a vector of bytes to a `String`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// A string ([`String`]) is made of bytes ([`u8`]), and a vector of bytes</span>
@@ -731,14 +861,14 @@
     <span class="doccomment">/// Basic usage:</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # use cursed_strings::String;</span>
+    <span class="doccomment">/// # use cursed_strings::{str, String};</span>
     <span class="doccomment">/// // some bytes, in a vector</span>
     <span class="doccomment">/// let sparkle_heart = vec![240, 159, 146, 150];</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// // We know these bytes are valid, so we&#39;ll use `unwrap()`.</span>
     <span class="doccomment">/// let sparkle_heart = String::from_utf8(sparkle_heart.into()).unwrap();</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// assert_eq!(sparkle_heart, &quot;💖&quot;);</span>
+    <span class="doccomment">/// assert_eq!(sparkle_heart, &lt;&amp;str&gt;::from(&quot;💖&quot;));</span>
     <span class="doccomment">/// ```</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Incorrect bytes:</span>
@@ -790,7 +920,7 @@
     <span class="doccomment">/// Basic usage:</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # use cursed_strings::String;</span>
+    <span class="doccomment">/// # use cursed_strings::{str, String};</span>
     <span class="doccomment">/// // some bytes, in a vector</span>
     <span class="doccomment">/// let sparkle_heart = vec![240, 159, 146, 150];</span>
     <span class="doccomment">///</span>
@@ -798,7 +928,7 @@
     <span class="doccomment">///     String::from_utf8_unchecked(sparkle_heart.into())</span>
     <span class="doccomment">/// };</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// assert_eq!(sparkle_heart, &quot;💖&quot;);</span>
+    <span class="doccomment">/// assert_eq!(sparkle_heart, &lt;&amp;str&gt;::from(&quot;💖&quot;));</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">from_utf8_unchecked</span>(<span class="ident">vec</span>: <span class="ident">GenericVec</span><span class="op">&lt;</span><span class="ident">u8</span>, <span class="ident">S</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>
@@ -836,13 +966,13 @@
     <span class="doccomment">/// Basic usage:</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # use cursed_strings::String;</span>
+    <span class="doccomment">/// # use cursed_strings::{str, String};</span>
     <span class="doccomment">/// let s = String::from(&quot;foo&quot;);</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// assert_eq!(s.as_str(), &quot;foo&quot;);</span>
+    <span class="doccomment">/// assert_eq!(s.as_str(), &lt;&amp;str&gt;::from(&quot;foo&quot;));</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">as_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">StringBase</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">as_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident"><span class="kw">crate</span>::str</span> {
         <span class="self">self</span>
     }
     <span class="doccomment">/// Converts a `String` into a mutable string slice.</span>
@@ -852,16 +982,16 @@
     <span class="doccomment">/// Basic usage:</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # use cursed_strings::String;</span>
+    <span class="doccomment">/// # use cursed_strings::{str, String};</span>
     <span class="doccomment">/// let mut s = String::from(&quot;foobar&quot;);</span>
     <span class="doccomment">/// let s_mut_str = s.as_mut_str();</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// s_mut_str.make_ascii_uppercase();</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// assert_eq!(s_mut_str, &quot;FOOBAR&quot;);</span>
+    <span class="doccomment">/// assert_eq!(s_mut_str, &lt;&amp;str&gt;::from(&quot;FOOBAR&quot;));</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">as_mut_str</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">StringBase</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">as_mut_str</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident"><span class="kw">crate</span>::str</span> {
         <span class="self">self</span>
     }
     <span class="doccomment">/// Appends a given string slice onto the end of this `String`.</span>
@@ -871,15 +1001,15 @@
     <span class="doccomment">/// Basic usage:</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # use cursed_strings::String;</span>
+    <span class="doccomment">/// # use cursed_strings::{str, String};</span>
     <span class="doccomment">/// let mut s = String::from(&quot;foo&quot;);</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// s.push_str(&quot;bar&quot;.into());</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// assert_eq!(s, &quot;foobar&quot;);</span>
+    <span class="doccomment">/// assert_eq!(s, &lt;&amp;str&gt;::from(&quot;foobar&quot;));</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">push_str</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">string</span>: <span class="kw-2">&amp;</span><span class="ident">StringBase</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>) {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">push_str</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">string</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="kw">crate</span>::str</span>) {
         <span class="self">self</span>.<span class="ident">storage</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">string</span>.<span class="ident">storage</span>)
     }
     <span class="doccomment">/// Ensures that this `String`&#39;s capacity is at least `additional` bytes</span>
@@ -947,14 +1077,14 @@
     <span class="doccomment">/// Basic usage:</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # use cursed_strings::String;</span>
+    <span class="doccomment">/// # use cursed_strings::{str, String};</span>
     <span class="doccomment">/// let mut s = String::from(&quot;abc&quot;);</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// s.push(&#39;1&#39;);</span>
     <span class="doccomment">/// s.push(&#39;2&#39;);</span>
     <span class="doccomment">/// s.push(&#39;3&#39;);</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// assert_eq!(s, &quot;abc123&quot;);</span>
+    <span class="doccomment">/// assert_eq!(s, &lt;&amp;str&gt;::from(&quot;abc123&quot;));</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">push</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">ch</span>: <span class="ident">char</span>) {
@@ -1013,12 +1143,12 @@
     <span class="doccomment">/// Basic usage:</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # use cursed_strings::String;</span>
+    <span class="doccomment">/// # use cursed_strings::{str, String};</span>
     <span class="doccomment">/// let mut s = String::from(&quot;hello&quot;);</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// s.truncate(2);</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// assert_eq!(s, &quot;he&quot;);</span>
+    <span class="doccomment">/// assert_eq!(s, &lt;&amp;str&gt;::from(&quot;he&quot;));</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">truncate</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">new_len</span>: <span class="ident">usize</span>) {
@@ -1085,14 +1215,14 @@
     <span class="doccomment">/// Basic usage:</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # use cursed_strings::String;</span>
+    <span class="doccomment">/// # use cursed_strings::{str, String};</span>
     <span class="doccomment">/// let mut s = String::with_capacity(3);</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// s.insert(0, &#39;f&#39;);</span>
     <span class="doccomment">/// s.insert(1, &#39;o&#39;);</span>
     <span class="doccomment">/// s.insert(2, &#39;o&#39;);</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// assert_eq!(s, &quot;foo&quot;);</span>
+    <span class="doccomment">/// assert_eq!(s, &lt;&amp;str&gt;::from(&quot;foo&quot;));</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">insert</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">idx</span>: <span class="ident">usize</span>, <span class="ident">ch</span>: <span class="ident">char</span>) {
@@ -1134,12 +1264,12 @@
     <span class="doccomment">/// Basic usage:</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # use cursed_strings::String;</span>
+    <span class="doccomment">/// # use cursed_strings::{str, String};</span>
     <span class="doccomment">/// let mut s = String::from(&quot;bar&quot;);</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// s.insert_str(0, &quot;foo&quot;);</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// assert_eq!(s, &quot;foobar&quot;);</span>
+    <span class="doccomment">/// assert_eq!(s, &lt;&amp;str&gt;::from(&quot;foobar&quot;));</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">insert_str</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">idx</span>: <span class="ident">usize</span>, <span class="ident">string</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) {
@@ -1164,7 +1294,7 @@
     <span class="doccomment">/// Basic usage:</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # use cursed_strings::String;</span>
+    <span class="doccomment">/// # use cursed_strings::{str, String};</span>
     <span class="doccomment">/// let mut s = String::from(&quot;hello&quot;);</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// unsafe {</span>
@@ -1173,7 +1303,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">///     vec.reverse();</span>
     <span class="doccomment">/// }</span>
-    <span class="doccomment">/// assert_eq!(s, &quot;olleh&quot;);</span>
+    <span class="doccomment">/// assert_eq!(s, &lt;&amp;str&gt;::from(&quot;olleh&quot;));</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">as_mut_vec</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">GenericVec</span><span class="op">&lt;</span><span class="ident">u8</span>, <span class="ident">S</span><span class="op">&gt;</span> {
@@ -1196,12 +1326,12 @@
     <span class="doccomment">/// # Examples</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # use cursed_strings::String;</span>
+    <span class="doccomment">/// # use cursed_strings::{str, String};</span>
     <span class="doccomment">/// # fn main() {</span>
     <span class="doccomment">/// let mut hello = String::from(&quot;Hello, World!&quot;);</span>
     <span class="doccomment">/// let world: String = hello.split_off(7);</span>
-    <span class="doccomment">/// assert_eq!(hello, &quot;Hello, &quot;);</span>
-    <span class="doccomment">/// assert_eq!(world, &quot;World!&quot;);</span>
+    <span class="doccomment">/// assert_eq!(hello, &lt;&amp;str&gt;::from(&quot;Hello, &quot;));</span>
+    <span class="doccomment">/// assert_eq!(world, &lt;&amp;str&gt;::from(&quot;World!&quot;));</span>
     <span class="doccomment">/// # }</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>

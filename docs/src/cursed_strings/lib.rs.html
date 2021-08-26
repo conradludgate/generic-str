@@ -47,6 +47,14 @@
 <span id="47">47</span>
 <span id="48">48</span>
 <span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
 </pre><pre class="rust"><code><span class="doccomment">//! The one and only string type in Rust</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ```</span>
@@ -68,17 +76,25 @@
 <span class="attribute">#![<span class="ident">feature</span>(<span class="ident">slice_ptr_len</span>)]</span>
 <span class="attribute">#![<span class="ident">feature</span>(<span class="ident">const_mut_refs</span>)]</span>
 <span class="attribute">#![<span class="ident">feature</span>(<span class="ident">const_fn_trait_bound</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">unicode_internals</span>)]</span>
 
 <span class="kw">mod</span> <span class="ident">convert</span>;
+<span class="kw">mod</span> <span class="ident">owned_utf32</span>;
 <span class="kw">mod</span> <span class="ident">owned_utf8</span>;
-<span class="kw">mod</span> <span class="ident">slice_index</span>;
+<span class="kw">mod</span> <span class="ident">slice_utf32</span>;
+<span class="kw">mod</span> <span class="ident">slice_utf32_index</span>;
 <span class="kw">mod</span> <span class="ident">slice_utf8</span>;
+<span class="kw">mod</span> <span class="ident">slice_utf8_index</span>;
 <span class="kw">mod</span> <span class="ident">string_base</span>;
-<span class="kw">mod</span> <span class="ident">traits</span>;
+<span class="kw">mod</span> <span class="ident">traits_utf32</span>;
+<span class="kw">mod</span> <span class="ident">traits_utf8</span>;
 <span class="kw">mod</span> <span class="ident">validation</span>;
 
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">convert</span>::<span class="kw-2">*</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">owned_utf8::FromUtf8Error</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">owned_utf32</span>::<span class="kw-2">*</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">owned_utf8</span>::<span class="kw-2">*</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">slice_utf32</span>::<span class="kw-2">*</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">slice_utf8</span>::<span class="kw-2">*</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">string_base</span>::<span class="kw-2">*</span>;
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
