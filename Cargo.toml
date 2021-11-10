@@ -9,4 +9,4 @@ description = "Annoyed that Rust has two string types? Well it doesn't any more"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-generic-vec = { features = ["nightly", "alloc"], git = "https://github.com/conradludgate/generic-vec" }
+generic-vec = { features = ["nightly", "alloc"], package = "cl-generic-vec", version = "0.1.4" }
