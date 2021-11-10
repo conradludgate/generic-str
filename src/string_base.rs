@@ -125,17 +125,11 @@ where
     fn eq(&self, other: &OwnedString<U, T>) -> bool {
         self.storage.eq(&other.storage)
     }
-    fn ne(&self, other: &OwnedString<U, T>) -> bool {
-        self.storage.ne(&other.storage)
-    }
 }
 
 impl<S: ?Sized + Storage<U>, U: PartialEq> PartialEq<OwnedString<U, S>> for StringSlice<U> {
     fn eq(&self, other: &OwnedString<U, S>) -> bool {
         other.storage.eq(&self.storage)
-    }
-    fn ne(&self, other: &OwnedString<U, S>) -> bool {
-        other.storage.ne(&self.storage)
     }
 }
 
@@ -143,17 +137,11 @@ impl<S: ?Sized + Storage<U>, U: PartialEq> PartialEq<OwnedString<U, S>> for &Str
     fn eq(&self, other: &OwnedString<U, S>) -> bool {
         other.storage.eq(&self.storage)
     }
-    fn ne(&self, other: &OwnedString<U, S>) -> bool {
-        other.storage.ne(&self.storage)
-    }
 }
 
 impl<S: ?Sized + Storage<U>, U: PartialEq> PartialEq<StringSlice<U>> for OwnedString<U, S> {
     fn eq(&self, other: &StringSlice<U>) -> bool {
         self.storage.eq(&other.storage)
-    }
-    fn ne(&self, other: &StringSlice<U>) -> bool {
-        self.storage.ne(&other.storage)
     }
 }
 
@@ -161,17 +149,11 @@ impl<S: ?Sized + Storage<U>, U: PartialEq> PartialEq<&StringSlice<U>> for OwnedS
     fn eq(&self, other: &&StringSlice<U>) -> bool {
         self.storage.eq(&other.storage)
     }
-    fn ne(&self, other: &&StringSlice<U>) -> bool {
-        self.storage.ne(&other.storage)
-    }
 }
 
 impl<U: PartialEq> PartialEq<StringSlice<U>> for StringSlice<U> {
     fn eq(&self, other: &StringSlice<U>) -> bool {
         self.storage.eq(&other.storage)
-    }
-    fn ne(&self, other: &StringSlice<U>) -> bool {
-        self.storage.ne(&other.storage)
     }
 }
 

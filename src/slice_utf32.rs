@@ -1,6 +1,6 @@
 use std::slice::SliceIndex;
 
-use crate::{StringSlice};
+use crate::StringSlice;
 
 #[allow(non_camel_case_types)]
 /// Exactly the same as [`std::str`], except generic
@@ -44,7 +44,7 @@ impl str32 {
     /// ```
     #[inline]
     pub fn is_empty(&self) -> bool {
-        self.len() == 0
+        self.storage.is_empty()
     }
 
     /// Converts a string slice to a raw pointer.
@@ -88,10 +88,18 @@ impl str32 {
     /// [`char`]. This pointer will be pointing to the first byte of the string
     /// slice.
     #[inline]
-    pub unsafe fn from_raw_parts_mut<'a>(data: *mut char, len: usize) -> &'a mut Self {
-        std::mem::transmute::<&'a mut [char], &'a mut Self>(std::slice::from_raw_parts_mut(
-            data, len,
-        ))
+    pub unsafe fn from_slice(data: &[char]) -> &Self {
+        std::mem::transmute(data)
+    }
+
+    /// Converts a mutable string slice to a raw pointer.
+    ///
+    /// As string slices are a slice of bytes, the raw pointer points to a
+    /// [`char`]. This pointer will be pointing to the first byte of the string
+    /// slice.
+    #[inline]
+    pub unsafe fn from_slice_mut(data: &mut [char]) -> &mut Self {
+        std::mem::transmute(data)
     }
 
     /// Returns a subslice of `str`.
@@ -176,7 +184,7 @@ impl str32 {
         // SAFETY: the caller must uphold the safety contract for `get_unchecked`;
         // the slice is dereferencable because `self` is a safe reference.
         // The returned pointer is safe because impls of `SliceIndex` have to guarantee that it is.
-        &*i.get_unchecked(&*self.as_ref())
+        &*i.get_unchecked(self)
     }
 
     /// Returns a mutable, unchecked subslice of `str`.
@@ -209,7 +217,7 @@ impl str32 {
         // SAFETY: the caller must uphold the safety contract for `get_unchecked_mut`;
         // the slice is dereferencable because `self` is a safe reference.
         // The returned pointer is safe because impls of `SliceIndex` have to guarantee that it is.
-        &mut *i.get_unchecked_mut(&mut *self.as_mut())
+        &mut *i.get_unchecked_mut(self)
     }
 
     /// Divide one string slice into two at an index.
@@ -294,8 +302,8 @@ impl str32 {
             // SAFETY: just checked that `mid` is on a char boundary.
             unsafe {
                 (
-                    Self::from_raw_parts_mut(ptr, mid),
-                    Self::from_raw_parts_mut(ptr.add(mid), len - mid),
+                    Self::from_slice_mut(std::slice::from_raw_parts_mut(ptr, mid)),
+                    Self::from_slice_mut(std::slice::from_raw_parts_mut(ptr.add(mid), len - mid)),
                 )
             }
         } else {

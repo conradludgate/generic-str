@@ -51,7 +51,7 @@ impl str {
     /// ```
     #[inline]
     pub fn is_empty(&self) -> bool {
-        self.len() == 0
+        self.storage.is_empty()
     }
 
     /// Checks that `index`-th byte is the first byte in a UTF-8 code point
@@ -296,7 +296,7 @@ impl str {
         // SAFETY: the caller must uphold the safety contract for `get_unchecked`;
         // the slice is dereferencable because `self` is a safe reference.
         // The returned pointer is safe because impls of `SliceIndex` have to guarantee that it is.
-        &*i.get_unchecked(&*self.as_ref())
+        &*i.get_unchecked(self)
     }
 
     /// Returns a mutable, unchecked subslice of `str`.
@@ -334,7 +334,7 @@ impl str {
         // SAFETY: the caller must uphold the safety contract for `get_unchecked_mut`;
         // the slice is dereferencable because `self` is a safe reference.
         // The returned pointer is safe because impls of `SliceIndex` have to guarantee that it is.
-        &mut *i.get_unchecked_mut(&mut *self.as_mut())
+        &mut *i.get_unchecked_mut(self)
     }
 
     /// Divide one string slice into two at an index.
@@ -380,7 +380,7 @@ impl str {
                 )
             }
         } else {
-            slice_error_fail(self.as_ref(), 0, mid)
+            slice_error_fail(self, 0, mid)
         }
     }
 
@@ -433,7 +433,7 @@ impl str {
                 )
             }
         } else {
-            slice_error_fail(self.as_ref(), 0, mid)
+            slice_error_fail(self, 0, mid)
         }
     }
 
@@ -692,9 +692,9 @@ impl str {
             to.push_str(if is_word_final { "ς" } else { "σ" }.into());
         }
 
-        fn case_ignoreable_then_cased<I: Iterator<Item = char>>(iter: I) -> bool {
+        fn case_ignoreable_then_cased<I: Iterator<Item = char>>(mut iter: I) -> bool {
             use core::unicode::{Case_Ignorable, Cased};
-            match iter.skip_while(|&c| Case_Ignorable(c)).next() {
+            match iter.find(|&c| !Case_Ignorable(c)) {
                 Some(c) => Cased(c),
                 None => false,
             }

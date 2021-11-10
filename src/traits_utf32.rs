@@ -91,17 +91,11 @@ impl<S: ?Sized + Storage<char>, T: ?Sized + AsRef<[char]>> PartialEq<T>
     fn eq(&self, other: &T) -> bool {
         self.storage.as_ref() == other.as_ref()
     }
-    fn ne(&self, other: &T) -> bool {
-        self.storage.as_ref() != other.as_ref()
-    }
 }
 
 impl<T: ?Sized + AsRef<[char]>> PartialEq<T> for crate::str32 {
     fn eq(&self, other: &T) -> bool {
         self.storage.as_ref() == other.as_ref()
-    }
-    fn ne(&self, other: &T) -> bool {
-        self.storage.as_ref() != other.as_ref()
     }
 }
 
