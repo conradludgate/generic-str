@@ -19,7 +19,7 @@ impl str32 {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::String32;
+    /// # use generic_str::String32;
     /// assert_eq!(String32::from("foo").len(), 3);
     /// assert_eq!(String32::from("ƒoo").len(), 3); // fancy f!
     /// ```
@@ -35,7 +35,7 @@ impl str32 {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::String32;
+    /// # use generic_str::String32;
     /// let s = String32::from("");
     /// assert!(s.is_empty());
     ///
@@ -63,7 +63,7 @@ impl str32 {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::String32;
+    /// # use generic_str::String32;
     /// let s = String32::from("Hello");
     /// let ptr = s.as_ptr();
     /// ```
@@ -88,8 +88,8 @@ impl str32 {
     /// [`char`]. This pointer will be pointing to the first byte of the string
     /// slice.
     #[inline]
-    pub unsafe fn from_slice(data: &[char]) -> &Self {
-        std::mem::transmute(data)
+    pub fn from_slice(data: &[char]) -> &Self {
+        unsafe { std::mem::transmute(data) }
     }
 
     /// Converts a mutable string slice to a raw pointer.
@@ -98,8 +98,8 @@ impl str32 {
     /// [`char`]. This pointer will be pointing to the first byte of the string
     /// slice.
     #[inline]
-    pub unsafe fn from_slice_mut(data: &mut [char]) -> &mut Self {
-        std::mem::transmute(data)
+    pub fn from_slice_mut(data: &mut [char]) -> &mut Self {
+        unsafe { std::mem::transmute(data) }
     }
 
     /// Returns a subslice of `str`.
@@ -110,7 +110,7 @@ impl str32 {
     /// # Examples
     ///
     /// ```
-    /// # use cursed_strings::{str, String32};
+    /// # use generic_str::{str, String32};
     /// let v = String32::from("🗻∈🌏");
     ///
     /// assert_eq!(v.get(0..2).unwrap().to_owned(), String32::from("🗻∈"));
@@ -131,7 +131,7 @@ impl str32 {
     /// # Examples
     ///
     /// ```
-    /// # use cursed_strings::{str, String32};
+    /// # use generic_str::{str, String32};
     /// let mut v = String32::from("hello");
     /// // correct length
     /// assert!(v.get_mut(0..5).is_some());
@@ -171,7 +171,7 @@ impl str32 {
     /// # Examples
     ///
     /// ```
-    /// # use cursed_strings::String32;
+    /// # use generic_str::String32;
     /// let v = "🗻∈🌏";
     /// unsafe {
     ///     assert_eq!(v.get_unchecked(0..4), "🗻");
@@ -206,7 +206,7 @@ impl str32 {
     /// # Examples
     ///
     /// ```
-    /// # use cursed_strings::String32;
+    /// # use generic_str::String32;
     /// let mut v = String32::from("🗻∈🌏");
     /// unsafe {
     ///     assert_eq!(*v.get_unchecked_mut(0..2), String32::from("🗻∈"));
@@ -239,7 +239,7 @@ impl str32 {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::String32;
+    /// # use generic_str::String32;
     /// let s = String32::from("Per Martin-Löf");
     ///
     /// let (first, last) = s.split_at(3);
@@ -283,7 +283,7 @@ impl str32 {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::String32;
+    /// # use generic_str::String32;
     /// let mut s = String32::from("Per Martin-Löf");
     /// {
     ///     let (first, last) = s.split_at_mut(3);
@@ -324,7 +324,7 @@ impl str32 {
     /// # Examples
     ///
     /// ```
-    /// # use cursed_strings::String32;
+    /// # use generic_str::String32;
     /// let mut s = String32::from("Grüße, Jürgen ❤");
     ///
     /// s.make_ascii_uppercase();
@@ -349,7 +349,7 @@ impl str32 {
     /// # Examples
     ///
     /// ```
-    /// # use cursed_strings::String32;
+    /// # use generic_str::String32;
     /// let mut s = String32::from("GRÜßE, JÜRGEN ❤");
     ///
     /// s.make_ascii_lowercase();

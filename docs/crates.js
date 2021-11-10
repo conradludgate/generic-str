@@ -1,1 +1,1 @@
-window.ALL_CRATES = ["cursed_strings","generic_vec"];
+window.ALL_CRATES = ["generic_str","generic_vec"];

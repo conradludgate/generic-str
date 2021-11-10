@@ -43,7 +43,7 @@ impl<S: ?Sized + Storage<T>, T> StringBase<GenericVec<T, S>> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::String;
+    /// # use generic_str::String;
     /// let mut s = String::with_capacity(10);
     ///
     /// // The String contains no chars, even though it has capacity for more

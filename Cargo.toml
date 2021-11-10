@@ -1,5 +1,5 @@
 [package]
-name = "cursed_strings"
+name = "generic-str"
 version = "0.2.1"
 edition = "2021"
 author = "Conrad Ludgate <conradludgate@gmail.com"

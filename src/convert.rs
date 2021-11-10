@@ -40,12 +40,12 @@ use crate::string_base::StringBase;
 /// Basic usage:
 ///
 /// ```
-/// # use cursed_strings::str;
+/// # use generic_str::str;
 /// // some bytes, in a vector
 /// let sparkle_heart = vec![240, 159, 146, 150];
 ///
 /// // We know these bytes are valid, so just use `unwrap()`.
-/// let sparkle_heart = cursed_strings::from_utf8(&sparkle_heart).unwrap();
+/// let sparkle_heart = generic_str::from_utf8(&sparkle_heart).unwrap();
 ///
 /// assert_eq!(sparkle_heart, <&str>::from("💖"));
 /// ```
@@ -56,7 +56,7 @@ use crate::string_base::StringBase;
 /// // some invalid bytes, in a vector
 /// let sparkle_heart = vec![0, 159, 146, 150];
 ///
-/// assert!(cursed_strings::from_utf8(&sparkle_heart).is_err());
+/// assert!(generic_str::from_utf8(&sparkle_heart).is_err());
 /// ```
 ///
 /// See the docs for [`Utf8Error`] for more details on the kinds of
@@ -65,12 +65,12 @@ use crate::string_base::StringBase;
 /// A "stack allocated string":
 ///
 /// ```
-/// # use cursed_strings::str;
+/// # use generic_str::str;
 /// // some bytes, in a stack-allocated array
 /// let sparkle_heart = [240, 159, 146, 150];
 ///
 /// // We know these bytes are valid, so just use `unwrap()`.
-/// let sparkle_heart = cursed_strings::from_utf8(&sparkle_heart).unwrap();
+/// let sparkle_heart = generic_str::from_utf8(&sparkle_heart).unwrap();
 ///
 /// assert_eq!(sparkle_heart, <&str>::from("💖"));
 /// ```
@@ -85,12 +85,12 @@ pub fn from_utf8(v: &[u8]) -> Result<&StringBase<[u8]>, Utf8Error> {
 /// Basic usage:
 ///
 /// ```
-/// # use cursed_strings::str;
+/// # use generic_str::str;
 /// // "Hello, Rust!" as a mutable vector
 /// let mut hellorust = vec![72, 101, 108, 108, 111, 44, 32, 82, 117, 115, 116, 33];
 ///
 /// // As we know these bytes are valid, we can use `unwrap()`
-/// let outstr = cursed_strings::from_utf8_mut(&mut hellorust).unwrap();
+/// let outstr = generic_str::from_utf8_mut(&mut hellorust).unwrap();
 ///
 /// assert_eq!(outstr, <&str>::from("Hello, Rust!"));
 /// ```
@@ -101,7 +101,7 @@ pub fn from_utf8(v: &[u8]) -> Result<&StringBase<[u8]>, Utf8Error> {
 /// // Some invalid bytes in a mutable vector
 /// let mut invalid = vec![128, 223];
 ///
-/// assert!(cursed_strings::from_utf8_mut(&mut invalid).is_err());
+/// assert!(generic_str::from_utf8_mut(&mut invalid).is_err());
 /// ```
 /// See the docs for [`Utf8Error`] for more details on the kinds of
 /// errors that can be returned.
@@ -127,12 +127,12 @@ pub fn from_utf8_mut(v: &mut [u8]) -> Result<&mut StringBase<[u8]>, Utf8Error> {
 /// Basic usage:
 ///
 /// ```
-/// # use cursed_strings::str;
+/// # use generic_str::str;
 /// // some bytes, in a vector
 /// let sparkle_heart = vec![240, 159, 146, 150];
 ///
 /// let sparkle_heart = unsafe {
-///     cursed_strings::from_utf8_unchecked(&sparkle_heart)
+///     generic_str::from_utf8_unchecked(&sparkle_heart)
 /// };
 ///
 /// assert_eq!(sparkle_heart, <&str>::from("💖"));
@@ -162,12 +162,12 @@ pub const unsafe fn from_utf8_unchecked(v: &[u8]) -> &StringBase<[u8]> {
 /// Basic usage:
 ///
 /// ```
-/// # use cursed_strings::str;
+/// # use generic_str::str;
 /// // some bytes, in a vector
 /// let sparkle_heart = vec![240, 159, 146, 150];
 ///
 /// let sparkle_heart = unsafe {
-///     cursed_strings::from_utf8_unchecked(&sparkle_heart)
+///     generic_str::from_utf8_unchecked(&sparkle_heart)
 /// };
 ///
 /// assert_eq!(sparkle_heart, <&str>::from("💖"));

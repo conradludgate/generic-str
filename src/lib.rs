@@ -1,7 +1,7 @@
 //! The one and only string type in Rust
 //!
 //! ```
-//! # use cursed_strings::str;
+//! # use generic_str::str;
 //! let foo: &str = "foo".into();
 //! let expected: &str = "foobar".into();
 //!

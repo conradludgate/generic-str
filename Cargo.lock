@@ -3,7 +3,7 @@
 version = 3
 
 [[package]]
-name = "cursed_strings"
+name = "generic-str"
 version = "0.2.1"
 dependencies = [
  "generic-vec",

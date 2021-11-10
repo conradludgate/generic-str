@@ -23,7 +23,7 @@ impl str {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::str;
+    /// # use generic_str::str;
     /// let len = <&str>::from("foo").len();
     /// assert_eq!(3, len);
     ///
@@ -42,7 +42,7 @@ impl str {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::str;
+    /// # use generic_str::str;
     /// let s: &str = "".into();
     /// assert!(s.is_empty());
     ///
@@ -65,7 +65,7 @@ impl str {
     /// # Examples
     ///
     /// ```
-    /// # use cursed_strings::str;
+    /// # use generic_str::str;
     /// let s: &str = "Löwe 老虎 Léopard".into();
     /// assert!(s.is_char_boundary(0));
     /// // start of `老`
@@ -115,7 +115,7 @@ impl str {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::str;
+    /// # use generic_str::str;
     /// let bytes = <&str>::from("bors").as_bytes();
     /// assert_eq!(b"bors", bytes);
     /// ```
@@ -139,7 +139,7 @@ impl str {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::String;
+    /// # use generic_str::String;
     /// let mut s = String::from("Hello");
     /// let bytes = unsafe { s.as_bytes_mut() };
     ///
@@ -149,7 +149,7 @@ impl str {
     /// Mutability:
     ///
     /// ```
-    /// # use cursed_strings::{str, String};
+    /// # use generic_str::{str, String};
     /// let mut s = String::from("🗻∈🌏");
     ///
     /// unsafe {
@@ -185,7 +185,7 @@ impl str {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::str;
+    /// # use generic_str::str;
     /// let s: &str = "Hello".into();
     /// let ptr = s.as_ptr();
     /// ```
@@ -215,7 +215,7 @@ impl str {
     /// # Examples
     ///
     /// ```
-    /// # use cursed_strings::{str, String};
+    /// # use generic_str::{str, String};
     /// let v = String::from("🗻∈🌏");
     ///
     /// assert_eq!(v.get(0..4), Some(<&str>::from("🗻")));
@@ -240,7 +240,7 @@ impl str {
     /// # Examples
     ///
     /// ```
-    /// # use cursed_strings::{str, String};
+    /// # use generic_str::{str, String};
     /// let mut v = String::from("hello");
     /// // correct length
     /// assert!(v.get_mut(0..5).is_some());
@@ -283,7 +283,7 @@ impl str {
     /// # Examples
     ///
     /// ```
-    /// # use cursed_strings::str;
+    /// # use generic_str::str;
     /// let v = <&str>::from("🗻∈🌏");
     /// unsafe {
     ///     assert_eq!(v.get_unchecked(0..4), <&str>::from("🗻"));
@@ -318,7 +318,7 @@ impl str {
     /// # Examples
     ///
     /// ```
-    /// # use cursed_strings::{str, String};
+    /// # use generic_str::{str, String};
     /// let mut v = String::from("🗻∈🌏");
     /// unsafe {
     ///     assert_eq!(v.get_unchecked_mut(0..4), <&str>::from("🗻"));
@@ -360,7 +360,7 @@ impl str {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::str;
+    /// # use generic_str::str;
     /// let s: &str = "Per Martin-Löf".into();
     ///
     /// let (first, last) = s.split_at(3);
@@ -406,7 +406,7 @@ impl str {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::{str, String};
+    /// # use generic_str::{str, String};
     /// let mut s = String::from("Per Martin-Löf");
     /// {
     ///     let (first, last) = s.split_at_mut(3);
@@ -452,7 +452,7 @@ impl str {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::str;
+    /// # use generic_str::str;
     /// let word = <&str>::from("goodbye");
     ///
     /// let count = word.chars().count();
@@ -505,7 +505,7 @@ impl str {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::str;
+    /// # use generic_str::str;
     /// let mut bytes = <&str>::from("bors").bytes();
     ///
     /// assert_eq!(Some(b'b'), bytes.next());
@@ -526,7 +526,7 @@ impl str {
     /// # Examples
     ///
     /// ```
-    /// # use cursed_strings::str;
+    /// # use generic_str::str;
     /// let ascii = <&str>::from("hello!\n");
     /// let non_ascii = <&str>::from("Grüße, Jürgen ❤");
     ///
@@ -549,7 +549,7 @@ impl str {
     /// # Examples
     ///
     /// ```
-    /// # use cursed_strings::str;
+    /// # use generic_str::str;
     /// assert!(<&str>::from("Ferris").eq_ignore_ascii_case("FERRIS".into()));
     /// assert!(<&str>::from("Ferrös").eq_ignore_ascii_case("FERRöS".into()));
     /// assert!(!<&str>::from("Ferrös").eq_ignore_ascii_case("FERRÖS".into()));
@@ -572,7 +572,7 @@ impl str {
     /// # Examples
     ///
     /// ```
-    /// # use cursed_strings::{str, String};
+    /// # use generic_str::{str, String};
     /// let mut s = String::from("Grüße, Jürgen ❤");
     ///
     /// s.make_ascii_uppercase();
@@ -599,7 +599,7 @@ impl str {
     /// # Examples
     ///
     /// ```
-    /// # use cursed_strings::{str, String};
+    /// # use generic_str::{str, String};
     /// let mut s = String::from("GRÜßE, JÜRGEN ❤");
     ///
     /// s.make_ascii_lowercase();
@@ -628,7 +628,7 @@ impl str {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::str;
+    /// # use generic_str::str;
     /// let s = <&str>::from("HELLO");
     ///
     /// assert_eq!(s.to_lowercase(), <&str>::from("hello"));
@@ -637,7 +637,7 @@ impl str {
     /// A tricky example, with sigma:
     ///
     /// ```
-    /// # use cursed_strings::str;
+    /// # use generic_str::str;
     /// let sigma = <&str>::from("Σ");
     ///
     /// assert_eq!(sigma.to_lowercase(), <&str>::from("σ"));
@@ -651,7 +651,7 @@ impl str {
     /// Languages without case are not changed:
     ///
     /// ```
-    /// # use cursed_strings::str;
+    /// # use generic_str::str;
     /// let new_year = <&str>::from("农历新年");
     ///
     /// assert_eq!(new_year, new_year.to_lowercase());
@@ -715,7 +715,7 @@ impl str {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::str;
+    /// # use generic_str::str;
     /// let s = <&str>::from("hello");
     ///
     /// assert_eq!(s.to_uppercase(), <&str>::from("HELLO"));
@@ -724,7 +724,7 @@ impl str {
     /// Scripts without case are not changed:
     ///
     /// ```
-    /// # use cursed_strings::str;
+    /// # use generic_str::str;
     /// let new_year = <&str>::from("农历新年");
     ///
     /// assert_eq!(new_year, new_year.to_uppercase());
@@ -732,7 +732,7 @@ impl str {
     ///
     /// One character can become multiple:
     /// ```
-    /// # use cursed_strings::str;
+    /// # use generic_str::str;
     /// let s = <&str>::from("tschüß");
     ///
     /// assert_eq!(s.to_uppercase(), <&str>::from("TSCHÜSS"));

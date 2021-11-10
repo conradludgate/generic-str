@@ -7,7 +7,7 @@ use crate::{OwnedString, StringBase};
 /// UTF-32 Owned String that supports reallocation
 ///
 /// ```
-/// # use cursed_strings::String32;
+/// # use generic_str::String32;
 /// let mut s = String32::new();
 /// s.push_str32(&String32::from("foobar"));
 /// assert_eq!(s, String32::from("foobar"));
@@ -17,7 +17,7 @@ pub type String32<A = Global> = OwnedString<char, Heap<char, A>>;
 /// UTF-32 Owned String that has a fixed capacity
 ///
 /// ```
-/// # use cursed_strings::{String32, ArrayString32};
+/// # use generic_str::{String32, ArrayString32};
 /// let mut s = ArrayString32::<8>::new();
 /// assert_eq!(std::mem::size_of_val(&s), 8 * 4 + 8); // 8 bytes of storage, 8 bytes for length
 ///
@@ -48,7 +48,7 @@ impl String32 {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::String32;
+    /// # use generic_str::String32;
     /// let s = String32::new();
     /// ```
     #[inline]
@@ -77,7 +77,7 @@ impl String32 {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::String32;
+    /// # use generic_str::String32;
     /// let mut s = String32::with_capacity(10);
     ///
     /// // The String contains no chars, even though it has capacity for more
@@ -114,7 +114,7 @@ impl<const N: usize> ArrayString32<N> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::ArrayString32;
+    /// # use generic_str::ArrayString32;
     /// let s = ArrayString32::<8>::new();
     /// ```
     #[inline]
@@ -133,7 +133,7 @@ impl<S: ?Sized + Storage<char>> OwnedString<char, S> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::String32;
+    /// # use generic_str::String32;
     /// let mut s = String32::from("foo");
     /// let t = String32::from("bar");
     ///
@@ -153,7 +153,7 @@ impl<S: ?Sized + Storage<char>> OwnedString<char, S> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::String32;
+    /// # use generic_str::String32;
     /// let mut s = String32::new();
     ///
     /// s.push('1');
@@ -176,7 +176,7 @@ impl<S: ?Sized + Storage<char>> OwnedString<char, S> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::String32;
+    /// # use generic_str::String32;
     /// let mut s = String32::from("foo");
     ///
     /// assert_eq!(s.pop(), Some('o'));
@@ -207,7 +207,7 @@ impl<S: ?Sized + Storage<char>> OwnedString<char, S> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::String32;
+    /// # use generic_str::String32;
     /// let mut s = String32::from("hello");
     ///
     /// s.truncate(2);
@@ -234,7 +234,7 @@ impl<S: ?Sized + Storage<char>> OwnedString<char, S> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::String32;
+    /// # use generic_str::String32;
     /// let mut s = String32::from("foo");
     ///
     /// assert_eq!(s.remove(0), 'f');
@@ -261,7 +261,7 @@ impl<S: ?Sized + Storage<char>> OwnedString<char, S> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::String32;
+    /// # use generic_str::String32;
     /// let mut s = String32::with_capacity(3);
     ///
     /// s.insert(0, 'f');
@@ -282,7 +282,7 @@ impl<S: ?Sized + Storage<char>> OwnedString<char, S> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::String32;
+    /// # use generic_str::String32;
     /// let mut s = String32::from("hello");
     ///
     /// unsafe {
@@ -314,7 +314,7 @@ impl<S: ?Sized + Storage<char>> OwnedString<char, S> {
     /// # Examples
     ///
     /// ```
-    /// # use cursed_strings::String32;
+    /// # use generic_str::String32;
     /// # fn main() {
     /// let mut hello = String32::from("Hello, World!");
     /// let world: String32 = hello.split_off(7);
@@ -342,7 +342,7 @@ impl<S: ?Sized + Storage<char>> OwnedString<char, S> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::String32;
+    /// # use generic_str::String32;
     /// let mut s = String32::from("foo");
     /// let cap = s.capacity();
     ///
@@ -364,7 +364,7 @@ impl<S: ?Sized + Storage<char>> OwnedString<char, S> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::String32;
+    /// # use generic_str::String32;
     /// let s = String32::with_capacity(10);
     ///
     /// assert!(s.capacity() >= 10);

@@ -10,7 +10,7 @@ use crate::{OwnedString, string_base::StringBase};
 /// Exactly the same as [`std::string::String`], except generic
 ///
 /// ```
-/// # use cursed_strings::{str, String};
+/// # use generic_str::{str, String};
 /// let mut s = String::new();
 /// s.push_str("foobar".into());
 /// assert_eq!(s, <&str>::from("foobar"));
@@ -20,7 +20,7 @@ pub type String<A = Global> = OwnedString<u8, Heap<u8, A>>;
 /// Same API as [`String`] but without any re-allocation. Can only hold up to `N` bytes
 ///
 /// ```
-/// # use cursed_strings::{str, ArrayString};
+/// # use generic_str::{str, ArrayString};
 /// let mut s = ArrayString::<8>::new();
 /// assert_eq!(std::mem::size_of_val(&s), 8 + 8); // 8 bytes of storage, 8 bytes for length
 ///
@@ -50,7 +50,7 @@ impl String {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::String;
+    /// # use generic_str::String;
     /// let s = String::new();
     /// ```
     #[inline]
@@ -79,7 +79,7 @@ impl String {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::String;
+    /// # use generic_str::String;
     /// let mut s = String::with_capacity(10);
     ///
     /// // The String contains no chars, even though it has capacity for more
@@ -116,7 +116,7 @@ impl<const N: usize> ArrayString<N> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::ArrayString;
+    /// # use generic_str::ArrayString;
     /// let s = ArrayString::<8>::new();
     /// ```
     #[inline]
@@ -167,7 +167,7 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::{str, String};
+    /// # use generic_str::{str, String};
     /// // some bytes, in a vector
     /// let sparkle_heart = vec![240, 159, 146, 150];
     ///
@@ -180,7 +180,7 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
     /// Incorrect bytes:
     ///
     /// ```
-    /// # use cursed_strings::String;
+    /// # use generic_str::String;
     /// // some invalid bytes, in a vector
     /// let sparkle_heart = vec![0, 159, 146, 150];
     ///
@@ -226,7 +226,7 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::{str, String};
+    /// # use generic_str::{str, String};
     /// // some bytes, in a vector
     /// let sparkle_heart = vec![240, 159, 146, 150];
     ///
@@ -252,7 +252,7 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::String;
+    /// # use generic_str::String;
     /// let s = String::from("hello");
     /// let bytes = s.into_bytes();
     ///
@@ -272,7 +272,7 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::{str, String};
+    /// # use generic_str::{str, String};
     /// let s = String::from("foo");
     ///
     /// assert_eq!(s.as_str(), <&str>::from("foo"));
@@ -288,7 +288,7 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::{str, String};
+    /// # use generic_str::{str, String};
     /// let mut s = String::from("foobar");
     /// let s_mut_str = s.as_mut_str();
     ///
@@ -307,7 +307,7 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::{str, String};
+    /// # use generic_str::{str, String};
     /// let mut s = String::from("foo");
     ///
     /// s.push_str("bar".into());
@@ -333,7 +333,7 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::String;
+    /// # use generic_str::String;
     /// let mut s = String::new();
     ///
     /// s.reserve(10);
@@ -344,7 +344,7 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
     /// This may not actually increase the capacity:
     ///
     /// ```
-    /// # use cursed_strings::String;
+    /// # use generic_str::String;
     /// let mut s = String::with_capacity(10);
     /// s.push('a');
     /// s.push('b');
@@ -383,7 +383,7 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::{str, String};
+    /// # use generic_str::{str, String};
     /// let mut s = String::from("abc");
     ///
     /// s.push('1');
@@ -413,7 +413,7 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::String;
+    /// # use generic_str::String;
     /// let mut s = String::from("foo");
     ///
     /// assert_eq!(s.pop(), Some('o'));
@@ -449,7 +449,7 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::{str, String};
+    /// # use generic_str::{str, String};
     /// let mut s = String::from("hello");
     ///
     /// s.truncate(2);
@@ -479,7 +479,7 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::String;
+    /// # use generic_str::String;
     /// let mut s = String::from("foo");
     ///
     /// assert_eq!(s.remove(0), 'f');
@@ -521,7 +521,7 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::{str, String};
+    /// # use generic_str::{str, String};
     /// let mut s = String::with_capacity(3);
     ///
     /// s.insert(0, 'f');
@@ -570,7 +570,7 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::{str, String};
+    /// # use generic_str::{str, String};
     /// let mut s = String::from("bar");
     ///
     /// s.insert_str(0, "foo");
@@ -600,7 +600,7 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::{str, String};
+    /// # use generic_str::{str, String};
     /// let mut s = String::from("hello");
     ///
     /// unsafe {
@@ -632,7 +632,7 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
     /// # Examples
     ///
     /// ```
-    /// # use cursed_strings::{str, String};
+    /// # use generic_str::{str, String};
     /// # fn main() {
     /// let mut hello = String::from("Hello, World!");
     /// let world: String = hello.split_off(7);
@@ -661,7 +661,7 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::String;
+    /// # use generic_str::String;
     /// let mut s = String::from("foo");
     ///
     /// s.clear();
@@ -682,7 +682,7 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
     /// Basic usage:
     ///
     /// ```
-    /// # use cursed_strings::String;
+    /// # use generic_str::String;
     /// let s = String::with_capacity(10);
     ///
     /// assert!(s.capacity() >= 10);
