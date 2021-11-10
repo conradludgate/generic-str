@@ -1,7 +1,7 @@
 [package]
 name = "cursed_strings"
-version = "0.2.0"
-edition = "2018"
+version = "0.2.1"
+edition = "2021"
 author = "Conrad Ludgate <conradludgate@gmail.com"
 license = "MIT"
 description = "Annoyed that Rust has two string types? Well it doesn't any more"
