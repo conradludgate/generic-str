@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src&#x2F;slice_utf8.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>slice_utf8.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../cursed_strings/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src&#x2F;slice_utf8.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>slice_utf8.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../cursed_strings/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -836,7 +836,7 @@
     <span class="doccomment">/// assert_eq!(&quot;ƒoo&quot;.chars().count(), 3);</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
         <span class="self">self</span>.<span class="ident">storage</span>.<span class="ident">as_ref</span>().<span class="ident">len</span>()
     }
 
@@ -855,8 +855,8 @@
     <span class="doccomment">/// assert!(!s.is_empty());</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_empty</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">len</span>() <span class="op">=</span><span class="op">=</span> <span class="number">0</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_empty</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
+        <span class="self">self</span>.<span class="ident">storage</span>.<span class="ident">is_empty</span>()
     }
 
     <span class="doccomment">/// Checks that `index`-th byte is the first byte in a UTF-8 code point</span>
@@ -884,12 +884,12 @@
     <span class="doccomment">/// assert!(!s.is_char_boundary(8));</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_char_boundary</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">index</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_char_boundary</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">index</span>: <span class="ident">usize</span>) -&gt; <span class="ident">bool</span> {
         <span class="comment">// 0 is always ok.</span>
         <span class="comment">// Test for 0 explicitly so that it can optimize out the check</span>
         <span class="comment">// easily and skip reading string data for that case.</span>
         <span class="comment">// Note that optimizing `self.get(..index)` relies on this.</span>
-        <span class="kw">if</span> <span class="ident">index</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
+        <span class="kw">if</span> <span class="ident">index</span> <span class="op">==</span> <span class="number">0</span> {
             <span class="kw">return</span> <span class="bool-val">true</span>;
         }
 
@@ -903,10 +903,10 @@
             <span class="comment">//</span>
             <span class="comment">// The check is placed exactly here, because it improves generated</span>
             <span class="comment">// code on higher opt-levels. See PR #84751 for more details.</span>
-            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">index</span> <span class="op">=</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">len</span>(),
+            <span class="prelude-val">None</span> =&gt; <span class="ident">index</span> <span class="op">==</span> <span class="self">self</span>.<span class="ident">len</span>(),
 
             <span class="comment">// This is bit magic equivalent to: b &lt; 128 || b &gt;= 192</span>
-            <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">b</span>) <span class="op">=</span><span class="op">&gt;</span> (<span class="ident">b</span> <span class="kw">as</span> <span class="ident">i8</span>) <span class="op">&gt;</span><span class="op">=</span> <span class="op">-</span><span class="number">0x40</span>,
+            <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">b</span>) =&gt; (<span class="ident">b</span> <span class="kw">as</span> <span class="ident">i8</span>) <span class="op">&gt;</span><span class="op">=</span> <span class="op">-</span><span class="number">0x40</span>,
         }
     }
 
@@ -925,7 +925,7 @@
     <span class="doccomment">/// assert_eq!(b&quot;bors&quot;, bytes);</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">as_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">as_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] {
         <span class="comment">// SAFETY: const sound because we transmute two types with the same layout</span>
         <span class="kw">unsafe</span> { <span class="ident">std::mem::transmute</span>(<span class="self">self</span>.<span class="ident">storage</span>.<span class="ident">as_ref</span>()) }
     }
@@ -969,7 +969,7 @@
     <span class="doccomment">/// assert_eq!(s, &lt;&amp;str&gt;::from(&quot;🍔∈🌏&quot;));</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">as_bytes_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>] {
+    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">as_bytes_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut</span> [<span class="ident">u8</span>] {
         <span class="comment">// SAFETY: const sound because we transmute two types with the same layout</span>
         <span class="ident">std::mem::transmute</span>(<span class="self">self</span>.<span class="ident">storage</span>.<span class="ident">as_mut</span>())
     }
@@ -995,8 +995,8 @@
     <span class="doccomment">/// let ptr = s.as_ptr();</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">as_ptr</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">u8</span> {
-        <span class="self">self</span>.<span class="ident">storage</span>.<span class="ident">as_ref</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> [<span class="ident">u8</span>] <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">u8</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">as_ptr</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">*const</span> <span class="ident">u8</span> {
+        <span class="self">self</span>.<span class="ident">storage</span>.<span class="ident">as_ref</span>() <span class="kw">as</span> <span class="kw-2">*const</span> [<span class="ident">u8</span>] <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">u8</span>
     }
 
     <span class="doccomment">/// Converts a mutable string slice to a raw pointer.</span>
@@ -1008,8 +1008,8 @@
     <span class="doccomment">/// It is your responsibility to make sure that the string slice only gets</span>
     <span class="doccomment">/// modified in a way that it remains valid UTF-8.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">as_mut_ptr</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span> {
-        <span class="self">self</span>.<span class="ident">storage</span>.<span class="ident">as_mut</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> [<span class="ident">u8</span>] <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">as_mut_ptr</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">*mut</span> <span class="ident">u8</span> {
+        <span class="self">self</span>.<span class="ident">storage</span>.<span class="ident">as_mut</span>() <span class="kw">as</span> <span class="kw-2">*mut</span> [<span class="ident">u8</span>] <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>
     }
 
     <span class="doccomment">/// Returns a subslice of `str`.</span>
@@ -1033,7 +1033,7 @@
     <span class="doccomment">/// assert!(v.get(..42).is_none());</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get</span><span class="op">&lt;</span><span class="ident">I</span>: <span class="ident">SliceIndex</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">i</span>: <span class="ident">I</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">I::Output</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get</span><span class="op">&lt;</span><span class="ident">I</span>: <span class="ident">SliceIndex</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">i</span>: <span class="ident">I</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">I::Output</span><span class="op">&gt;</span> {
         <span class="ident">i</span>.<span class="ident">get</span>(<span class="self">self</span>.<span class="ident">as_ref</span>())
     }
 
@@ -1065,7 +1065,7 @@
     <span class="doccomment">/// assert_eq!(v, &lt;&amp;str&gt;::from(&quot;HEllo&quot;));</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_mut</span><span class="op">&lt;</span><span class="ident">I</span>: <span class="ident">SliceIndex</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">i</span>: <span class="ident">I</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">I::Output</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_mut</span><span class="op">&lt;</span><span class="ident">I</span>: <span class="ident">SliceIndex</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">i</span>: <span class="ident">I</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="ident">I::Output</span><span class="op">&gt;</span> {
         <span class="ident">i</span>.<span class="ident">get_mut</span>(<span class="self">self</span>.<span class="ident">as_mut</span>())
     }
 
@@ -1097,11 +1097,11 @@
     <span class="doccomment">/// }</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">get_unchecked</span><span class="op">&lt;</span><span class="ident">I</span>: <span class="ident">SliceIndex</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">i</span>: <span class="ident">I</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">I::Output</span> {
+    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">get_unchecked</span><span class="op">&lt;</span><span class="ident">I</span>: <span class="ident">SliceIndex</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">i</span>: <span class="ident">I</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">I::Output</span> {
         <span class="comment">// SAFETY: the caller must uphold the safety contract for `get_unchecked`;</span>
         <span class="comment">// the slice is dereferencable because `self` is a safe reference.</span>
         <span class="comment">// The returned pointer is safe because impls of `SliceIndex` have to guarantee that it is.</span>
-        <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">i</span>.<span class="ident">get_unchecked</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="self">self</span>.<span class="ident">as_ref</span>())
+        <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">i</span>.<span class="ident">get_unchecked</span>(<span class="self">self</span>)
     }
 
     <span class="doccomment">/// Returns a mutable, unchecked subslice of `str`.</span>
@@ -1133,13 +1133,13 @@
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">get_unchecked_mut</span><span class="op">&lt;</span><span class="ident">I</span>: <span class="ident">SliceIndex</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span>(
-        <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
+        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
         <span class="ident">i</span>: <span class="ident">I</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">I::Output</span> {
+    ) -&gt; <span class="kw-2">&amp;mut</span> <span class="ident">I::Output</span> {
         <span class="comment">// SAFETY: the caller must uphold the safety contract for `get_unchecked_mut`;</span>
         <span class="comment">// the slice is dereferencable because `self` is a safe reference.</span>
         <span class="comment">// The returned pointer is safe because impls of `SliceIndex` have to guarantee that it is.</span>
-        <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="ident">i</span>.<span class="ident">get_unchecked_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">as_mut</span>())
+        <span class="kw-2">&amp;mut</span> <span class="kw-2">*</span><span class="ident">i</span>.<span class="ident">get_unchecked_mut</span>(<span class="self">self</span>)
     }
 
     <span class="doccomment">/// Divide one string slice into two at an index.</span>
@@ -1174,7 +1174,7 @@
     <span class="doccomment">/// assert_eq!(last, &lt;&amp;str&gt;::from(&quot; Martin-Löf&quot;));</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">split_at</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">mid</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="kw-2">&amp;</span><span class="self">Self</span>, <span class="kw-2">&amp;</span><span class="self">Self</span>) {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">split_at</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">mid</span>: <span class="ident">usize</span>) -&gt; (<span class="kw-2">&amp;</span><span class="self">Self</span>, <span class="kw-2">&amp;</span><span class="self">Self</span>) {
         <span class="comment">// is_char_boundary checks that the index is in [0, .len()]</span>
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">is_char_boundary</span>(<span class="ident">mid</span>) {
             <span class="comment">// SAFETY: just checked that `mid` is on a char boundary.</span>
@@ -1185,7 +1185,7 @@
                 )
             }
         } <span class="kw">else</span> {
-            <span class="ident">slice_error_fail</span>(<span class="self">self</span>.<span class="ident">as_ref</span>(), <span class="number">0</span>, <span class="ident">mid</span>)
+            <span class="ident">slice_error_fail</span>(<span class="self">self</span>, <span class="number">0</span>, <span class="ident">mid</span>)
         }
     }
 
@@ -1222,7 +1222,7 @@
     <span class="doccomment">/// assert_eq!(s, &lt;&amp;str&gt;::from(&quot;PER Martin-Löf&quot;));</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">split_at_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">mid</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span>) {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">split_at_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">mid</span>: <span class="ident">usize</span>) -&gt; (<span class="kw-2">&amp;mut</span> <span class="self">Self</span>, <span class="kw-2">&amp;mut</span> <span class="self">Self</span>) {
         <span class="comment">// is_char_boundary checks that the index is in [0, .len()]</span>
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">is_char_boundary</span>(<span class="ident">mid</span>) {
             <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">len</span>();
@@ -1238,7 +1238,7 @@
                 )
             }
         } <span class="kw">else</span> {
-            <span class="ident">slice_error_fail</span>(<span class="self">self</span>.<span class="ident">as_ref</span>(), <span class="number">0</span>, <span class="ident">mid</span>)
+            <span class="ident">slice_error_fail</span>(<span class="self">self</span>, <span class="number">0</span>, <span class="ident">mid</span>)
         }
     }
 
@@ -1291,11 +1291,11 @@
     <span class="doccomment">/// assert_eq!(None, chars.next());</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">chars</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Chars</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">chars</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Chars</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="ident">std::primitive::str</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">into</span>();
         <span class="ident">s</span>.<span class="ident">chars</span>()
     }
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">char_indices</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CharIndices</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">char_indices</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">CharIndices</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="ident">std::primitive::str</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">into</span>();
         <span class="ident">s</span>.<span class="ident">char_indices</span>()
     }
@@ -1321,7 +1321,7 @@
     <span class="doccomment">/// assert_eq!(None, bytes.next());</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Bytes</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Bytes</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="ident">std::primitive::str</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">into</span>();
         <span class="ident">s</span>.<span class="ident">bytes</span>()
     }
@@ -1339,7 +1339,7 @@
     <span class="doccomment">/// assert!(!non_ascii.is_ascii());</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_ascii</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_ascii</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="comment">// We can treat each byte as character here: all multibyte characters</span>
         <span class="comment">// start with a byte that is not in the ascii range, so we will stop</span>
         <span class="comment">// there already.</span>
@@ -1360,7 +1360,7 @@
     <span class="doccomment">/// assert!(!&lt;&amp;str&gt;::from(&quot;Ferrös&quot;).eq_ignore_ascii_case(&quot;FERRÖS&quot;.into()));</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">eq_ignore_ascii_case</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">eq_ignore_ascii_case</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">as_bytes</span>().<span class="ident">eq_ignore_ascii_case</span>(<span class="ident">other</span>.<span class="ident">as_bytes</span>())
     }
 
@@ -1385,7 +1385,7 @@
     <span class="doccomment">/// assert_eq!(s, &lt;&amp;str&gt;::from(&quot;GRüßE, JüRGEN ❤&quot;));</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">make_ascii_uppercase</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">make_ascii_uppercase</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
         <span class="comment">// SAFETY: safe because we transmute two types with the same layout.</span>
         <span class="kw">let</span> <span class="ident">me</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="self">self</span>.<span class="ident">as_bytes_mut</span>() };
         <span class="ident">me</span>.<span class="ident">make_ascii_uppercase</span>()
@@ -1412,7 +1412,7 @@
     <span class="doccomment">/// assert_eq!(s, &lt;&amp;str&gt;::from(&quot;grÜße, jÜrgen ❤&quot;));</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">make_ascii_lowercase</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">make_ascii_lowercase</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
         <span class="comment">// SAFETY: safe because we transmute two types with the same layout.</span>
         <span class="kw">let</span> <span class="ident">me</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="self">self</span>.<span class="ident">as_bytes_mut</span>() };
         <span class="ident">me</span>.<span class="ident">make_ascii_lowercase</span>()
@@ -1461,24 +1461,24 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// assert_eq!(new_year, new_year.to_lowercase());</span>
     <span class="doccomment">/// ```</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_lowercase</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="kw">crate</span>::String</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_lowercase</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident"><span class="kw">crate</span>::String</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">s</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::String::with_capacity</span>(<span class="self">self</span>.<span class="ident">len</span>());
         <span class="kw">for</span> (<span class="ident">i</span>, <span class="ident">c</span>) <span class="kw">in</span> <span class="self">self</span>[..].<span class="ident">char_indices</span>() {
-            <span class="kw">if</span> <span class="ident">c</span> <span class="op">=</span><span class="op">=</span> <span class="string">&#39;Σ&#39;</span> {
+            <span class="kw">if</span> <span class="ident">c</span> <span class="op">==</span> <span class="string">&#39;Σ&#39;</span> {
                 <span class="comment">// Σ maps to σ, except at the end of a word where it maps to ς.</span>
                 <span class="comment">// This is the only conditional (contextual) but language-independent mapping</span>
                 <span class="comment">// in `SpecialCasing.txt`,</span>
                 <span class="comment">// so hard-code it rather than have a generic &quot;condition&quot; mechanism.</span>
                 <span class="comment">// See https://github.com/rust-lang/rust/issues/26035</span>
-                <span class="ident">map_uppercase_sigma</span>(<span class="self">self</span>, <span class="ident">i</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">s</span>)
+                <span class="ident">map_uppercase_sigma</span>(<span class="self">self</span>, <span class="ident">i</span>, <span class="kw-2">&amp;mut</span> <span class="ident">s</span>)
             } <span class="kw">else</span> {
                 <span class="kw">match</span> <span class="ident">conversions::to_lower</span>(<span class="ident">c</span>) {
-                    [<span class="ident">a</span>, <span class="string">&#39;\0&#39;</span>, <span class="kw">_</span>] <span class="op">=</span><span class="op">&gt;</span> <span class="ident">s</span>.<span class="ident">push</span>(<span class="ident">a</span>),
-                    [<span class="ident">a</span>, <span class="ident">b</span>, <span class="string">&#39;\0&#39;</span>] <span class="op">=</span><span class="op">&gt;</span> {
+                    [<span class="ident">a</span>, <span class="string">&#39;\0&#39;</span>, <span class="kw">_</span>] =&gt; <span class="ident">s</span>.<span class="ident">push</span>(<span class="ident">a</span>),
+                    [<span class="ident">a</span>, <span class="ident">b</span>, <span class="string">&#39;\0&#39;</span>] =&gt; {
                         <span class="ident">s</span>.<span class="ident">push</span>(<span class="ident">a</span>);
                         <span class="ident">s</span>.<span class="ident">push</span>(<span class="ident">b</span>);
                     }
-                    [<span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">c</span>] <span class="op">=</span><span class="op">&gt;</span> {
+                    [<span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">c</span>] =&gt; {
                         <span class="ident">s</span>.<span class="ident">push</span>(<span class="ident">a</span>);
                         <span class="ident">s</span>.<span class="ident">push</span>(<span class="ident">b</span>);
                         <span class="ident">s</span>.<span class="ident">push</span>(<span class="ident">c</span>);
@@ -1488,20 +1488,20 @@
         }
         <span class="kw">return</span> <span class="ident">s</span>;
 
-        <span class="kw">fn</span> <span class="ident">map_uppercase_sigma</span>(<span class="ident">from</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">i</span>: <span class="ident">usize</span>, <span class="ident">to</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident"><span class="kw">crate</span>::String</span>) {
+        <span class="kw">fn</span> <span class="ident">map_uppercase_sigma</span>(<span class="ident">from</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">i</span>: <span class="ident">usize</span>, <span class="ident">to</span>: <span class="kw-2">&amp;mut</span> <span class="ident"><span class="kw">crate</span>::String</span>) {
             <span class="comment">// See http://www.unicode.org/versions/Unicode7.0.0/ch03.pdf#G33992</span>
             <span class="comment">// for the definition of `Final_Sigma`.</span>
-            <span class="macro">debug_assert!</span>(<span class="string">&#39;Σ&#39;</span>.<span class="ident">len_utf8</span>() <span class="op">=</span><span class="op">=</span> <span class="number">2</span>);
+            <span class="macro">debug_assert!</span>(<span class="string">&#39;Σ&#39;</span>.<span class="ident">len_utf8</span>() <span class="op">==</span> <span class="number">2</span>);
             <span class="kw">let</span> <span class="ident">is_word_final</span> <span class="op">=</span> <span class="ident">case_ignoreable_then_cased</span>(<span class="ident">from</span>[..<span class="ident">i</span>].<span class="ident">chars</span>().<span class="ident">rev</span>())
                 <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="ident">case_ignoreable_then_cased</span>(<span class="ident">from</span>[<span class="ident">i</span> <span class="op">+</span> <span class="number">2</span>..].<span class="ident">chars</span>());
             <span class="ident">to</span>.<span class="ident">push_str</span>(<span class="kw">if</span> <span class="ident">is_word_final</span> { <span class="string">&quot;ς&quot;</span> } <span class="kw">else</span> { <span class="string">&quot;σ&quot;</span> }.<span class="ident">into</span>());
         }
 
-        <span class="kw">fn</span> <span class="ident">case_ignoreable_then_cased</span><span class="op">&lt;</span><span class="ident">I</span>: <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">char</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">iter</span>: <span class="ident">I</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        <span class="kw">fn</span> <span class="ident">case_ignoreable_then_cased</span><span class="op">&lt;</span><span class="ident">I</span>: <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">char</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">mut</span> <span class="ident">iter</span>: <span class="ident">I</span>) -&gt; <span class="ident">bool</span> {
             <span class="kw">use</span> <span class="ident">core::unicode</span>::{<span class="ident">Case_Ignorable</span>, <span class="ident">Cased</span>};
-            <span class="kw">match</span> <span class="ident">iter</span>.<span class="ident">skip_while</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">c</span><span class="op">|</span> <span class="ident">Case_Ignorable</span>(<span class="ident">c</span>)).<span class="ident">next</span>() {
-                <span class="prelude-val">Some</span>(<span class="ident">c</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Cased</span>(<span class="ident">c</span>),
-                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
+            <span class="kw">match</span> <span class="ident">iter</span>.<span class="ident">find</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">c</span><span class="op">|</span> <span class="op">!</span><span class="ident">Case_Ignorable</span>(<span class="ident">c</span>)) {
+                <span class="prelude-val">Some</span>(<span class="ident">c</span>) =&gt; <span class="ident">Cased</span>(<span class="ident">c</span>),
+                <span class="prelude-val">None</span> =&gt; <span class="bool-val">false</span>,
             }
         }
     }
@@ -1542,16 +1542,16 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// assert_eq!(s.to_uppercase(), &lt;&amp;str&gt;::from(&quot;TSCHÜSS&quot;));</span>
     <span class="doccomment">/// ```</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_uppercase</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="kw">crate</span>::String</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_uppercase</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident"><span class="kw">crate</span>::String</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">s</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::String::with_capacity</span>(<span class="self">self</span>.<span class="ident">len</span>());
         <span class="kw">for</span> <span class="ident">c</span> <span class="kw">in</span> <span class="self">self</span>[..].<span class="ident">chars</span>() {
             <span class="kw">match</span> <span class="ident">conversions::to_upper</span>(<span class="ident">c</span>) {
-                [<span class="ident">a</span>, <span class="string">&#39;\0&#39;</span>, <span class="kw">_</span>] <span class="op">=</span><span class="op">&gt;</span> <span class="ident">s</span>.<span class="ident">push</span>(<span class="ident">a</span>),
-                [<span class="ident">a</span>, <span class="ident">b</span>, <span class="string">&#39;\0&#39;</span>] <span class="op">=</span><span class="op">&gt;</span> {
+                [<span class="ident">a</span>, <span class="string">&#39;\0&#39;</span>, <span class="kw">_</span>] =&gt; <span class="ident">s</span>.<span class="ident">push</span>(<span class="ident">a</span>),
+                [<span class="ident">a</span>, <span class="ident">b</span>, <span class="string">&#39;\0&#39;</span>] =&gt; {
                     <span class="ident">s</span>.<span class="ident">push</span>(<span class="ident">a</span>);
                     <span class="ident">s</span>.<span class="ident">push</span>(<span class="ident">b</span>);
                 }
-                [<span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">c</span>] <span class="op">=</span><span class="op">&gt;</span> {
+                [<span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">c</span>] =&gt; {
                     <span class="ident">s</span>.<span class="ident">push</span>(<span class="ident">a</span>);
                     <span class="ident">s</span>.<span class="ident">push</span>(<span class="ident">b</span>);
                     <span class="ident">s</span>.<span class="ident">push</span>(<span class="ident">c</span>);
@@ -1565,7 +1565,7 @@
 <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">never</span>)]</span>
 <span class="attribute">#[<span class="ident">cold</span>]</span>
 <span class="attribute">#[<span class="ident">track_caller</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">slice_error_fail</span>(<span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">begin</span>: <span class="ident">usize</span>, <span class="ident">end</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="op">!</span> {
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">slice_error_fail</span>(<span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">begin</span>: <span class="ident">usize</span>, <span class="ident">end</span>: <span class="ident">usize</span>) -&gt; <span class="op">!</span> {
     <span class="kw">const</span> <span class="ident">MAX_DISPLAY_LENGTH</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">256</span>;
     <span class="kw">let</span> (<span class="ident">truncated</span>, <span class="ident">s_trunc</span>) <span class="op">=</span> <span class="ident">truncate_to_char_boundary</span>(<span class="ident">s</span>, <span class="ident">MAX_DISPLAY_LENGTH</span>);
     <span class="kw">let</span> <span class="ident">ellipsis</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">truncated</span> { <span class="string">&quot;[...]&quot;</span> } <span class="kw">else</span> { <span class="string">&quot;&quot;</span> };
