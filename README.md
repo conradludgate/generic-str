@@ -1,8 +1,11 @@
 # generic-str
 
+[![docs](https://img.shields.io/docsrs/generic-str?style=flat-square)](https://docs.rs/generic-str/latest/generic_str/)
+
 The one true string type in Rust!
 
 > This project intends to be a proof-of-concept for an idea I had a few months back.
+> There is lots of unsafe and requires nightly. Tested on `cargo 1.58.0-nightly (2e2a16e98 2021-11-08)`
 
 ## Explaination
 
