@@ -1,3 +1,0 @@
-(function() {var implementors = {};
-implementors["generic_vec"] = [{"text":"impl&lt;T&gt; !<a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html\" title=\"trait core::marker::Sized\">Sized</a> for <a class=\"struct\" href=\"generic_vec/raw/struct.UninitSlice.html\" title=\"struct generic_vec::raw::UninitSlice\">UninitSlice</a>&lt;T&gt;","synthetic":true,"types":["generic_vec::raw::slice::UninitSlice"]}];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

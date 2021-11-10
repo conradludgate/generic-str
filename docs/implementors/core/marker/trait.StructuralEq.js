@@ -1,3 +1,0 @@
-(function() {var implementors = {};
-implementors["generic_str"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/marker/trait.StructuralEq.html\" title=\"trait core::marker::StructuralEq\">StructuralEq</a> for <a class=\"struct\" href=\"generic_str/struct.FromUtf8Error.html\" title=\"struct generic_str::FromUtf8Error\">FromUtf8Error</a>","synthetic":false,"types":["generic_str::owned_utf8::FromUtf8Error"]}];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

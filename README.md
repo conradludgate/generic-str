@@ -7,7 +7,7 @@ The one true string type in Rust!
 > This project intends to be a proof-of-concept for an idea I had a few months back.
 > There is lots of unsafe and requires nightly. Tested on `cargo 1.58.0-nightly (2e2a16e98 2021-11-08)`
 
-## Explaination
+## Explanation
 
 Rust notoriously has a few different string types. The two main contenders are:
 
@@ -49,7 +49,9 @@ pub type String<A = Global> = OwnedString<u8, Heap<u8, A>>;
 pub type OwnedString<U, S> = StringBase<GenericVec<U, S>>;
 ```
 
-Which might look more complicated, and you'd be right, but it then allows for static allocated but resizable strings!
+Which might look more complicated, and you'd be right. Implementation wise, `GenericVec<U, Heap<U, A>>` is supposed to be identical to `Vec<u8>` so it should be functionally the same as before.
+
+But, with the added power of this storage backed system, it allows for static allocated but resizable† strings!
 
 ```rust
 pub type ArrayString<const N: usize> = OwnedString<u8, UninitBuffer<[u8; N], u8>>;
@@ -57,3 +59,5 @@ pub type ArrayString<const N: usize> = OwnedString<u8, UninitBuffer<[u8; N], u8>
 
 And I get to re-use all of the same code from when implementing `String`,
 because it's all implemented on the base `OwnedString` type for string manipulations that needs resizablility.
+
+> †: obviously, they cannot be resized larger than the pre-defined `N` value, and it will panic in the event that you attempt to push over that.

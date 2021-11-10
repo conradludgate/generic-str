@@ -1,1 +1,0 @@
-window.ALL_CRATES = ["generic_str","generic_vec"];
