@@ -1,4 +1,4 @@
-use std::slice::SliceIndex;
+use core::slice::SliceIndex;
 
 use crate::string_base::StringBase;
 
@@ -14,7 +14,7 @@ use crate::string_base::StringBase;
 /// direct implementation of `Index` and `IndexMut`.
 ///
 /// Equivalent to `&self[0 .. len]` or `&mut self[0 .. len]`.
-unsafe impl SliceIndex<StringBase<[char]>> for std::ops::RangeFull {
+unsafe impl SliceIndex<StringBase<[char]>> for core::ops::RangeFull {
     type Output = StringBase<[char]>;
     #[inline]
     fn get(self, slice: &StringBase<[char]>) -> Option<&Self::Output> {
@@ -56,7 +56,7 @@ unsafe impl SliceIndex<StringBase<[char]>> for std::ops::RangeFull {
 /// # Panics
 ///
 /// Panics if `begin > end`, or if `end > len`.
-unsafe impl SliceIndex<StringBase<[char]>> for std::ops::Range<usize> {
+unsafe impl SliceIndex<StringBase<[char]>> for core::ops::Range<usize> {
     type Output = StringBase<[char]>;
     #[inline]
     fn get(self, slice: &StringBase<[char]>) -> Option<&Self::Output> {
@@ -83,7 +83,7 @@ unsafe impl SliceIndex<StringBase<[char]>> for std::ops::Range<usize> {
         // which satisfies all the conditions for `add`.
         let ptr = slice.as_ptr().add(self.start);
         let len = self.end - self.start;
-        std::ptr::slice_from_raw_parts(ptr, len) as *const StringBase<[char]>
+        core::ptr::slice_from_raw_parts(ptr, len) as *const StringBase<[char]>
     }
     #[inline]
     unsafe fn get_unchecked_mut(self, slice: *mut StringBase<[char]>) -> *mut Self::Output {
@@ -91,14 +91,19 @@ unsafe impl SliceIndex<StringBase<[char]>> for std::ops::Range<usize> {
         // SAFETY: see comments for `get_unchecked`.
         let ptr = slice.as_mut_ptr().add(self.start);
         let len = self.end - self.start;
-        std::ptr::slice_from_raw_parts_mut(ptr, len) as *mut StringBase<[char]>
+        core::ptr::slice_from_raw_parts_mut(ptr, len) as *mut StringBase<[char]>
     }
     #[inline]
     fn index(self, slice: &StringBase<[char]>) -> &Self::Output {
         let end = self.end;
         match self.get(slice) {
             Some(s) => s,
+
+            #[cfg(feature = "alloc")]
             None => panic!("char index {} is out of bounds of `{}`", end, &*slice),
+
+            #[cfg(not(feature = "alloc"))]
+            None => panic!("char index {} is out of bounds", end),
         }
     }
     #[inline]
@@ -108,7 +113,11 @@ unsafe impl SliceIndex<StringBase<[char]>> for std::ops::Range<usize> {
             // We know the pointer is unique because we got it from `slice`.
             unsafe { &mut *self.get_unchecked_mut(slice) }
         } else {
-            panic!("char index {} is out of bounds of `{}`", self.end, &*slice)
+            #[cfg(feature = "alloc")]
+            panic!("char index {} is out of bounds of `{}`", self.end, &*slice);
+
+            #[cfg(not(feature = "alloc"))]
+            panic!("char index {} is out of bounds", self.end);
         }
     }
 }
@@ -127,7 +136,7 @@ unsafe impl SliceIndex<StringBase<[char]>> for std::ops::Range<usize> {
 /// # Panics
 ///
 /// Panics if `end > len`.
-unsafe impl SliceIndex<StringBase<[char]>> for std::ops::RangeTo<usize> {
+unsafe impl SliceIndex<StringBase<[char]>> for core::ops::RangeTo<usize> {
     type Output = StringBase<[char]>;
     #[inline]
     fn get(self, slice: &StringBase<[char]>) -> Option<&Self::Output> {
@@ -153,20 +162,25 @@ unsafe impl SliceIndex<StringBase<[char]>> for std::ops::RangeTo<usize> {
     unsafe fn get_unchecked(self, slice: *const StringBase<[char]>) -> *const Self::Output {
         let slice = slice as *const [char];
         let ptr = slice.as_ptr();
-        std::ptr::slice_from_raw_parts(ptr, self.end) as *const StringBase<[char]>
+        core::ptr::slice_from_raw_parts(ptr, self.end) as *const StringBase<[char]>
     }
     #[inline]
     unsafe fn get_unchecked_mut(self, slice: *mut StringBase<[char]>) -> *mut Self::Output {
         let slice = slice as *mut [char];
         let ptr = slice.as_mut_ptr();
-        std::ptr::slice_from_raw_parts_mut(ptr, self.end) as *mut StringBase<[char]>
+        core::ptr::slice_from_raw_parts_mut(ptr, self.end) as *mut StringBase<[char]>
     }
     #[inline]
     fn index(self, slice: &StringBase<[char]>) -> &Self::Output {
         let end = self.end;
         match self.get(slice) {
             Some(s) => s,
+
+            #[cfg(feature = "alloc")]
             None => panic!("char index {} is out of bounds of `{}`", end, &*slice),
+
+            #[cfg(not(feature = "alloc"))]
+            None => panic!("char index {} is out of bounds", end),
         }
     }
     #[inline]
@@ -176,7 +190,11 @@ unsafe impl SliceIndex<StringBase<[char]>> for std::ops::RangeTo<usize> {
             // and we are passing in a safe reference, so the return value will also be one.
             unsafe { &mut *self.get_unchecked_mut(slice) }
         } else {
-            panic!("char index {} is out of bounds of `{}`", self.end, &*slice)
+            #[cfg(feature = "alloc")]
+            panic!("char index {} is out of bounds of `{}`", self.end, &*slice);
+
+            #[cfg(not(feature = "alloc"))]
+            panic!("char index {} is out of bounds", self.end);
         }
     }
 }
@@ -196,7 +214,7 @@ unsafe impl SliceIndex<StringBase<[char]>> for std::ops::RangeTo<usize> {
 /// # Panics
 ///
 /// Panics if `begin > len`.
-unsafe impl SliceIndex<StringBase<[char]>> for std::ops::RangeFrom<usize> {
+unsafe impl SliceIndex<StringBase<[char]>> for core::ops::RangeFrom<usize> {
     type Output = StringBase<[char]>;
     #[inline]
     fn get(self, slice: &StringBase<[char]>) -> Option<&Self::Output> {
@@ -225,7 +243,7 @@ unsafe impl SliceIndex<StringBase<[char]>> for std::ops::RangeFrom<usize> {
         // which satisfies all the conditions for `add`.
         let ptr = slice.as_ptr().add(self.start);
         let len = slice.len() - self.start;
-        std::ptr::slice_from_raw_parts(ptr, len) as *const StringBase<[char]>
+        core::ptr::slice_from_raw_parts(ptr, len) as *const StringBase<[char]>
     }
     #[inline]
     unsafe fn get_unchecked_mut(self, slice: *mut StringBase<[char]>) -> *mut Self::Output {
@@ -233,14 +251,19 @@ unsafe impl SliceIndex<StringBase<[char]>> for std::ops::RangeFrom<usize> {
         // SAFETY: identical to `get_unchecked`.
         let ptr = slice.as_mut_ptr().add(self.start);
         let len = slice.len() - self.start;
-        std::ptr::slice_from_raw_parts_mut(ptr, len) as *mut StringBase<[char]>
+        core::ptr::slice_from_raw_parts_mut(ptr, len) as *mut StringBase<[char]>
     }
     #[inline]
     fn index(self, slice: &StringBase<[char]>) -> &Self::Output {
         let start = self.start;
         match self.get(slice) {
             Some(s) => s,
+
+            #[cfg(feature = "alloc")]
             None => panic!("char index {} is out of bounds of `{}`", start, &*slice),
+
+            #[cfg(not(feature = "alloc"))]
+            None => panic!("char index {} is out of bounds", start),
         }
     }
     #[inline]
@@ -250,7 +273,11 @@ unsafe impl SliceIndex<StringBase<[char]>> for std::ops::RangeFrom<usize> {
             // and we are passing in a safe reference, so the return value will also be one.
             unsafe { &mut *self.get_unchecked_mut(slice) }
         } else {
-            panic!("char index {} is out of bounds of `{}`", self.start, &*slice)
+            #[cfg(feature = "alloc")]
+            panic!("char index {} is out of bounds of `{}`", self.start, &*slice);
+
+            #[cfg(not(feature = "alloc"))]
+            panic!("char index {} is out of bounds", self.start);
         }
     }
 }
@@ -269,7 +296,7 @@ unsafe impl SliceIndex<StringBase<[char]>> for std::ops::RangeFrom<usize> {
 /// Panics if `end` does not point to the ending byte offset of a character
 /// (`end + 1` is either a starting byte offset as defined by
 /// `is_char_boundary`, or equal to `len`), or if `end >= len`.
-unsafe impl SliceIndex<StringBase<[char]>> for std::ops::RangeToInclusive<usize> {
+unsafe impl SliceIndex<StringBase<[char]>> for core::ops::RangeToInclusive<usize> {
     type Output = StringBase<[char]>;
     #[inline]
     fn get(self, slice: &StringBase<[char]>) -> Option<&Self::Output> {

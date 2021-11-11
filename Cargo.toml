@@ -1,6 +1,6 @@
 [package]
 name = "generic-str"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 author = "Conrad Ludgate <conradludgate@gmail.com"
 license = "MIT"
@@ -9,4 +9,10 @@ description = "Annoyed that Rust has two string types? Well it doesn't any more"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-generic-vec = { features = ["nightly", "alloc"], package = "cl-generic-vec", version = "0.1.4" }
+generic-vec = { package = "cl-generic-vec", version = "0.1.4", default-features = false, features = ["nightly"] }
+
+[features]
+default = ["std"]
+
+std = ["alloc", "generic-vec/std"]
+alloc = ["generic-vec/alloc"]

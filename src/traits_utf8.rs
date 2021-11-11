@@ -1,20 +1,29 @@
-use generic_vec::{
-    raw::{Heap, Storage},
-    GenericVec, HeapVec,
+use generic_vec::{raw::Storage, GenericVec};
+
+#[cfg(feature = "alloc")]
+use generic_vec::{raw::Heap, HeapVec};
+#[cfg(feature = "alloc")]
+use std::{
+    borrow::Cow,
+    ops::{Add, AddAssign},
+    ptr::NonNull,
 };
 
 use crate::string_base::StringBase;
-use std::{borrow::Cow, ops::{Add, AddAssign, Index, IndexMut}, ptr::NonNull, slice::SliceIndex};
+use core::{
+    ops::{Index, IndexMut},
+    slice::SliceIndex,
+};
 
 impl AsRef<str> for StringBase<[u8]> {
     fn as_ref(&self) -> &str {
-        unsafe { std::str::from_utf8_unchecked(&self.storage) }
+        unsafe { core::str::from_utf8_unchecked(&self.storage) }
     }
 }
 
 impl AsMut<str> for StringBase<[u8]> {
     fn as_mut(&mut self) -> &mut str {
-        unsafe { std::str::from_utf8_unchecked_mut(&mut self.storage) }
+        unsafe { core::str::from_utf8_unchecked_mut(&mut self.storage) }
     }
 }
 
@@ -40,36 +49,37 @@ where
     }
 }
 
-impl<S: ?Sized + Storage<u8>> std::fmt::Debug for StringBase<GenericVec<u8, S>> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl<S: ?Sized + Storage<u8>> core::fmt::Debug for StringBase<GenericVec<u8, S>> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let s: &StringBase<[u8]> = self.as_ref();
         let s: &str = s.as_ref();
         write!(f, "{:?}", s)
     }
 }
 
-impl<S: ?Sized + Storage<u8>> std::fmt::Display for StringBase<GenericVec<u8, S>> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl<S: ?Sized + Storage<u8>> core::fmt::Display for StringBase<GenericVec<u8, S>> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let s: &StringBase<[u8]> = self.as_ref();
         let s: &str = s.as_ref();
         write!(f, "{}", s)
     }
 }
 
-impl std::fmt::Debug for StringBase<[u8]> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Debug for StringBase<[u8]> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let s: &str = self.as_ref();
         write!(f, "{:?}", s)
     }
 }
 
-impl std::fmt::Display for StringBase<[u8]> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for StringBase<[u8]> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let s: &str = self.as_ref();
         write!(f, "{}", s)
     }
 }
 
+#[cfg(feature = "alloc")]
 impl From<String> for StringBase<HeapVec<u8>> {
     fn from(s: String) -> Self {
         let (ptr, len, capacity) = s.into_raw_parts();
@@ -84,6 +94,7 @@ impl From<String> for StringBase<HeapVec<u8>> {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl From<&str> for StringBase<HeapVec<u8>> {
     fn from(s: &str) -> Self {
         s.to_owned().into()
@@ -92,22 +103,23 @@ impl From<&str> for StringBase<HeapVec<u8>> {
 
 impl From<&str> for &StringBase<[u8]> {
     fn from(s: &str) -> Self {
-        unsafe { std::mem::transmute(s) }
+        unsafe { core::mem::transmute(s) }
     }
 }
 
 impl From<&mut str> for &mut StringBase<[u8]> {
     fn from(s: &mut str) -> Self {
-        unsafe { std::mem::transmute(s) }
+        unsafe { core::mem::transmute(s) }
     }
 }
 
 impl<'a, S: ?Sized + AsRef<[u8]>> From<&'a StringBase<S>> for &'a str {
     fn from(s: &'a StringBase<S>) -> Self {
-        unsafe { std::str::from_utf8_unchecked(s.storage.as_ref()) }
+        unsafe { core::str::from_utf8_unchecked(s.storage.as_ref()) }
     }
 }
 
+#[cfg(feature = "alloc")]
 impl<'a> Add<&'a crate::str> for Cow<'a, crate::str> {
     type Output = Cow<'a, crate::str>;
 
@@ -118,6 +130,7 @@ impl<'a> Add<&'a crate::str> for Cow<'a, crate::str> {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl<'a> AddAssign<&'a crate::str> for Cow<'a, crate::str> {
     fn add_assign(&mut self, rhs: &'a crate::str) {
         if self.is_empty() {

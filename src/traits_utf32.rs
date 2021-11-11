@@ -1,7 +1,19 @@
-use generic_vec::{raw::Storage, GenericVec, HeapVec};
+use generic_vec::{raw::Storage, GenericVec};
+
+#[cfg(feature = "alloc")]
+use generic_vec::HeapVec;
+#[cfg(feature = "alloc")]
+use std::{
+    borrow::Cow,
+    iter::FromIterator,
+    ops::{Add, AddAssign},
+};
 
 use crate::string_base::StringBase;
-use std::{borrow::Cow, iter::FromIterator, ops::{Add, AddAssign, Index, IndexMut}, slice::SliceIndex};
+use core::{
+    ops::{Index, IndexMut},
+    slice::SliceIndex,
+};
 
 impl<I> Index<I> for crate::str32
 where
@@ -25,6 +37,7 @@ where
     }
 }
 
+#[cfg(feature = "alloc")]
 impl<S: ?Sized + Storage<char>> std::fmt::Debug for StringBase<GenericVec<char, S>> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s: String = self.as_ref().storage.iter().collect();
@@ -32,6 +45,7 @@ impl<S: ?Sized + Storage<char>> std::fmt::Debug for StringBase<GenericVec<char, 
     }
 }
 
+#[cfg(feature = "alloc")]
 impl<S: ?Sized + Storage<char>> std::fmt::Display for StringBase<GenericVec<char, S>> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s: String = self.as_ref().storage.iter().collect();
@@ -39,6 +53,7 @@ impl<S: ?Sized + Storage<char>> std::fmt::Display for StringBase<GenericVec<char
     }
 }
 
+#[cfg(feature = "alloc")]
 impl std::fmt::Debug for crate::str32 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s: String = self.storage.iter().collect();
@@ -46,6 +61,7 @@ impl std::fmt::Debug for crate::str32 {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl std::fmt::Display for crate::str32 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s: String = self.storage.iter().collect();
@@ -53,20 +69,23 @@ impl std::fmt::Display for crate::str32 {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl From<String> for crate::String32 {
     fn from(s: String) -> Self {
         s.chars().collect()
     }
 }
 
+#[cfg(feature = "alloc")]
 impl FromIterator<char> for crate::String32 {
-    fn from_iter<I: IntoIterator<Item=char>>(iter: I) -> Self {
+    fn from_iter<I: IntoIterator<Item = char>>(iter: I) -> Self {
         let mut new = Self::new();
         iter.into_iter().for_each(|c| new.push(c));
         new
     }
 }
 
+#[cfg(feature = "alloc")]
 impl From<&str> for StringBase<HeapVec<char>> {
     fn from(s: &str) -> Self {
         s.to_owned().into()
@@ -75,13 +94,13 @@ impl From<&str> for StringBase<HeapVec<char>> {
 
 impl From<&str> for &crate::str32 {
     fn from(s: &str) -> Self {
-        unsafe { std::mem::transmute(s) }
+        unsafe { core::mem::transmute(s) }
     }
 }
 
 impl From<&mut str> for &mut crate::str32 {
     fn from(s: &mut str) -> Self {
-        unsafe { std::mem::transmute(s) }
+        unsafe { core::mem::transmute(s) }
     }
 }
 
@@ -99,6 +118,7 @@ impl<T: ?Sized + AsRef<[char]>> PartialEq<T> for crate::str32 {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl<'a> Add<&'a crate::str32> for Cow<'a, crate::str32> {
     type Output = Cow<'a, crate::str32>;
 
@@ -109,6 +129,7 @@ impl<'a> Add<&'a crate::str32> for Cow<'a, crate::str32> {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl<'a> AddAssign<&'a crate::str32> for Cow<'a, crate::str32> {
     fn add_assign(&mut self, rhs: &'a crate::str32) {
         if self.is_empty() {

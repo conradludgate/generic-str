@@ -1,5 +1,4 @@
-use core::unicode::conversions;
-use std::{
+use core::{
     slice::SliceIndex,
     str::{Bytes, CharIndices, Chars},
 };
@@ -122,7 +121,7 @@ impl str {
     #[inline(always)]
     pub fn as_bytes(&self) -> &[u8] {
         // SAFETY: const sound because we transmute two types with the same layout
-        unsafe { std::mem::transmute(self.storage.as_ref()) }
+        unsafe { core::mem::transmute(self.storage.as_ref()) }
     }
 
     /// Converts a mutable string slice to a mutable byte slice.
@@ -166,7 +165,7 @@ impl str {
     #[inline(always)]
     pub unsafe fn as_bytes_mut(&mut self) -> &mut [u8] {
         // SAFETY: const sound because we transmute two types with the same layout
-        std::mem::transmute(self.storage.as_mut())
+        core::mem::transmute(self.storage.as_mut())
     }
 
     /// Converts a string slice to a raw pointer.
@@ -487,11 +486,11 @@ impl str {
     /// ```
     #[inline]
     pub fn chars(&self) -> Chars<'_> {
-        let s: &std::primitive::str = self.into();
+        let s: &core::primitive::str = self.into();
         s.chars()
     }
     pub fn char_indices(&self) -> CharIndices<'_> {
-        let s: &std::primitive::str = self.into();
+        let s: &core::primitive::str = self.into();
         s.char_indices()
     }
 
@@ -517,7 +516,7 @@ impl str {
     /// ```
     #[inline]
     pub fn bytes(&self) -> Bytes<'_> {
-        let s: &std::primitive::str = self.into();
+        let s: &core::primitive::str = self.into();
         s.bytes()
     }
 
@@ -656,7 +655,10 @@ impl str {
     ///
     /// assert_eq!(new_year, new_year.to_lowercase());
     /// ```
+    #[cfg(feature = "alloc")]
     pub fn to_lowercase(&self) -> crate::String {
+        use core::unicode::conversions;
+
         let mut s = crate::String::with_capacity(self.len());
         for (i, c) in self[..].char_indices() {
             if c == 'Σ' {
@@ -737,7 +739,10 @@ impl str {
     ///
     /// assert_eq!(s.to_uppercase(), <&str>::from("TSCHÜSS"));
     /// ```
+    #[cfg(feature = "alloc")]
     pub fn to_uppercase(&self) -> crate::String {
+        use core::unicode::conversions;
+
         let mut s = crate::String::with_capacity(self.len());
         for c in self[..].chars() {
             match conversions::to_upper(c) {

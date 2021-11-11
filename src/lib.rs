@@ -1,3 +1,5 @@
+#![cfg_attr(not(any(doc, feature = "std")), no_std)]
+
 //! The one and only string type in Rust
 //!
 //! ```
@@ -10,8 +12,8 @@
 //!
 //! assert_eq!(foobar, *expected);
 //! ```
+#![cfg_attr(feature = "alloc", feature(vec_into_raw_parts))]
 #![feature(str_internals)]
-#![feature(vec_into_raw_parts)]
 #![feature(allocator_api)]
 #![feature(slice_range)]
 #![feature(slice_index_methods)]

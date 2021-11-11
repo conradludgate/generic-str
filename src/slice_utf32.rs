@@ -1,4 +1,4 @@
-use std::slice::SliceIndex;
+use core::slice::SliceIndex;
 
 use crate::StringSlice;
 
@@ -89,7 +89,7 @@ impl str32 {
     /// slice.
     #[inline]
     pub fn from_slice(data: &[char]) -> &Self {
-        unsafe { std::mem::transmute(data) }
+        unsafe { core::mem::transmute(data) }
     }
 
     /// Converts a mutable string slice to a raw pointer.
@@ -99,7 +99,7 @@ impl str32 {
     /// slice.
     #[inline]
     pub fn from_slice_mut(data: &mut [char]) -> &mut Self {
-        unsafe { std::mem::transmute(data) }
+        unsafe { core::mem::transmute(data) }
     }
 
     /// Returns a subslice of `str`.
@@ -257,7 +257,11 @@ impl str32 {
                 )
             }
         } else {
+            #[cfg(feature = "alloc")]
             panic!("char index {} is out of bounds of `{}`", mid, self);
+
+            #[cfg(not(feature = "alloc"))]
+            panic!("char index {} is out of bounds", mid);
         }
     }
 
@@ -302,12 +306,16 @@ impl str32 {
             // SAFETY: just checked that `mid` is on a char boundary.
             unsafe {
                 (
-                    Self::from_slice_mut(std::slice::from_raw_parts_mut(ptr, mid)),
-                    Self::from_slice_mut(std::slice::from_raw_parts_mut(ptr.add(mid), len - mid)),
+                    Self::from_slice_mut(core::slice::from_raw_parts_mut(ptr, mid)),
+                    Self::from_slice_mut(core::slice::from_raw_parts_mut(ptr.add(mid), len - mid)),
                 )
             }
         } else {
+            #[cfg(feature = "alloc")]
             panic!("char index {} is out of bounds of `{}`", mid, self);
+
+            #[cfg(not(feature = "alloc"))]
+            panic!("char index {} is out of bounds", mid);
         }
     }
 

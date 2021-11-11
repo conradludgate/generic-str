@@ -1,9 +1,14 @@
-use std::{alloc::Allocator, borrow::Borrow, cmp::Ordering};
+use core::cmp::Ordering;
 
 use generic_vec::{
     raw::{Storage, StorageWithCapacity},
-    GenericVec, HeapVec,
+    GenericVec,
 };
+
+#[cfg(feature = "alloc")]
+use generic_vec::HeapVec;
+#[cfg(feature = "alloc")]
+use std::{alloc::Allocator, borrow::Borrow};
 
 #[derive(Default, Copy, Clone)]
 #[repr(transparent)]
@@ -71,18 +76,18 @@ impl<S: ?Sized + Storage<T>, T> StringBase<GenericVec<T, S>> {
     }
 }
 
-impl<T: ?Sized + std::ops::Deref> std::ops::Deref for StringBase<T> {
+impl<T: ?Sized + core::ops::Deref> core::ops::Deref for StringBase<T> {
     type Target = StringBase<T::Target>;
 
     fn deref(&self) -> &StringBase<T::Target> {
-        unsafe { std::mem::transmute::<&T::Target, &StringBase<T::Target>>(self.storage.deref()) }
+        unsafe { core::mem::transmute::<&T::Target, &StringBase<T::Target>>(self.storage.deref()) }
     }
 }
 
-impl<T: ?Sized + std::ops::DerefMut> std::ops::DerefMut for StringBase<T> {
+impl<T: ?Sized + core::ops::DerefMut> core::ops::DerefMut for StringBase<T> {
     fn deref_mut(&mut self) -> &mut StringBase<T::Target> {
         unsafe {
-            std::mem::transmute::<&mut T::Target, &mut StringBase<T::Target>>(
+            core::mem::transmute::<&mut T::Target, &mut StringBase<T::Target>>(
                 self.storage.deref_mut(),
             )
         }
@@ -91,22 +96,24 @@ impl<T: ?Sized + std::ops::DerefMut> std::ops::DerefMut for StringBase<T> {
 
 impl<T: ?Sized + AsRef<U>, U: ?Sized> AsRef<StringBase<U>> for StringBase<T> {
     fn as_ref(&self) -> &StringBase<U> {
-        unsafe { std::mem::transmute::<&U, &StringBase<U>>(self.storage.as_ref()) }
+        unsafe { core::mem::transmute::<&U, &StringBase<U>>(self.storage.as_ref()) }
     }
 }
 
 impl<T: ?Sized + AsMut<U>, U: ?Sized> AsMut<StringBase<U>> for StringBase<T> {
     fn as_mut(&mut self) -> &mut StringBase<U> {
-        unsafe { std::mem::transmute::<&mut U, &mut StringBase<U>>(self.storage.as_mut()) }
+        unsafe { core::mem::transmute::<&mut U, &mut StringBase<U>>(self.storage.as_mut()) }
     }
 }
 
+#[cfg(feature = "alloc")]
 impl<T, A: Allocator> Borrow<StringBase<[T]>> for StringBase<HeapVec<T, A>> {
     fn borrow(&self) -> &StringBase<[T]> {
         unsafe { std::mem::transmute::<&[T], &StringBase<[T]>>(self.storage.borrow()) }
     }
 }
 
+#[cfg(feature = "alloc")]
 impl<T: Clone> ToOwned for StringBase<[T]> {
     type Owned = StringBase<HeapVec<T>>;
 

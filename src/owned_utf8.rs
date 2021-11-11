@@ -1,11 +1,16 @@
-use std::{
-    alloc::{Allocator, Global},
-    str::Utf8Error,
+use core::str::Utf8Error;
+
+use generic_vec::{
+    raw::{Storage, StorageWithCapacity, UninitBuffer},
+    ArrayVec, GenericVec,
 };
 
-use generic_vec::{ArrayVec, GenericVec, raw::{Heap, Storage, StorageWithCapacity, UninitBuffer}};
+#[cfg(feature = "alloc")]
+use generic_vec::raw::Heap;
+#[cfg(feature = "alloc")]
+use std::alloc::{Allocator, Global};
 
-use crate::{OwnedString, string_base::StringBase};
+use crate::{string_base::StringBase, OwnedString};
 
 /// Exactly the same as [`std::string::String`], except generic
 ///
@@ -15,6 +20,7 @@ use crate::{OwnedString, string_base::StringBase};
 /// s.push_str("foobar".into());
 /// assert_eq!(s, <&str>::from("foobar"));
 /// ```
+#[cfg(feature = "alloc")]
 pub type String<A = Global> = OwnedString<u8, Heap<u8, A>>;
 
 /// Same API as [`String`] but without any re-allocation. Can only hold up to `N` bytes
@@ -33,6 +39,7 @@ pub type String<A = Global> = OwnedString<u8, Heap<u8, A>>;
 /// ```
 pub type ArrayString<const N: usize> = OwnedString<u8, UninitBuffer<[u8; N], u8>>;
 
+#[cfg(feature = "alloc")]
 impl String {
     /// Creates a new empty `String`.
     ///
@@ -102,6 +109,7 @@ impl String {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl<A: Allocator> String<A> {
     pub fn with_alloc(alloc: A) -> Self {
         Self::with_storage(Heap::with_alloc(alloc))
@@ -127,10 +135,20 @@ impl<const N: usize> ArrayString<N> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub struct FromUtf8Error {
-    bytes: Vec<u8>,
+#[derive(PartialEq, Eq)]
+pub struct FromUtf8Error<S: Storage<u8>> {
+    bytes: GenericVec<u8, S>,
     error: Utf8Error,
+}
+
+use core::fmt;
+impl<S: Storage<u8>> fmt::Debug for FromUtf8Error<S> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("FromUtf8Error")
+            .field("bytes", &self.bytes)
+            .field("error", &self.error)
+            .finish()
+    }
 }
 
 impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
@@ -195,14 +213,14 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
     /// [`&str`]: prim@str
     /// [`into_bytes`]: StringBase::into_bytes
     #[inline]
-    pub fn from_utf8(vec: GenericVec<u8, S>) -> Result<Self, FromUtf8Error>
+    pub fn from_utf8(vec: GenericVec<u8, S>) -> Result<Self, FromUtf8Error<S>>
     where
         S: Sized,
     {
-        match std::str::from_utf8(&vec) {
+        match core::str::from_utf8(&vec) {
             Ok(..) => Ok(Self { storage: vec }),
             Err(e) => Err(FromUtf8Error {
-                bytes: vec.to_vec(),
+                bytes: vec,
                 error: e,
             }),
         }
@@ -496,7 +514,7 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
         let next = idx + ch.len_utf8();
         let len = self.len();
         unsafe {
-            std::ptr::copy(
+            core::ptr::copy(
                 self.storage.as_ptr().add(next),
                 self.storage.as_mut_ptr().add(idx),
                 len - next,
@@ -546,12 +564,12 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
         let amt = bytes.len();
         self.storage.reserve(amt);
 
-        std::ptr::copy(
+        core::ptr::copy(
             self.storage.as_ptr().add(idx),
             self.storage.as_mut_ptr().add(idx + amt),
             len - idx,
         );
-        std::ptr::copy(bytes.as_ptr(), self.storage.as_mut_ptr().add(idx), amt);
+        core::ptr::copy(bytes.as_ptr(), self.storage.as_mut_ptr().add(idx), amt);
         self.storage.set_len_unchecked(len + amt);
     }
 

@@ -1,6 +1,13 @@
+#[cfg(feature = "alloc")]
 use std::alloc::{Allocator, Global};
 
-use generic_vec::{ArrayVec, GenericVec, raw::{Heap, Storage, StorageWithCapacity, UninitBuffer}};
+use generic_vec::{
+    raw::{Storage, StorageWithCapacity, UninitBuffer},
+    ArrayVec, GenericVec,
+};
+
+#[cfg(feature = "alloc")]
+use generic_vec::raw::Heap;
 
 use crate::{OwnedString, StringBase};
 
@@ -12,6 +19,7 @@ use crate::{OwnedString, StringBase};
 /// s.push_str32(&String32::from("foobar"));
 /// assert_eq!(s, String32::from("foobar"));
 /// ```
+#[cfg(feature = "alloc")]
 pub type String32<A = Global> = OwnedString<char, Heap<char, A>>;
 
 /// UTF-32 Owned String that has a fixed capacity
@@ -30,7 +38,7 @@ pub type String32<A = Global> = OwnedString<char, Heap<char, A>>;
 /// ```
 pub type ArrayString32<const N: usize> = OwnedString<char, UninitBuffer<[char; N], char>>;
 
-
+#[cfg(feature = "alloc")]
 impl String32 {
     /// Creates a new empty `String32`.
     ///
@@ -100,6 +108,7 @@ impl String32 {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl<A: Allocator> String32<A> {
     pub fn with_alloc(alloc: A) -> Self {
         Self::with_storage(Heap::with_alloc(alloc))

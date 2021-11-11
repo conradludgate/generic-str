@@ -1,4 +1,4 @@
-use std::str::Utf8Error;
+use core::str::Utf8Error;
 
 use crate::string_base::StringBase;
 
@@ -75,7 +75,7 @@ use crate::string_base::StringBase;
 /// assert_eq!(sparkle_heart, <&str>::from("💖"));
 /// ```
 pub fn from_utf8(v: &[u8]) -> Result<&StringBase<[u8]>, Utf8Error> {
-    Ok(std::str::from_utf8(v)?.into())
+    Ok(core::str::from_utf8(v)?.into())
 }
 
 /// Converts a mutable slice of bytes to a mutable string slice.
@@ -106,7 +106,7 @@ pub fn from_utf8(v: &[u8]) -> Result<&StringBase<[u8]>, Utf8Error> {
 /// See the docs for [`Utf8Error`] for more details on the kinds of
 /// errors that can be returned.
 pub fn from_utf8_mut(v: &mut [u8]) -> Result<&mut StringBase<[u8]>, Utf8Error> {
-    Ok(std::str::from_utf8_mut(v)?.into())
+    Ok(core::str::from_utf8_mut(v)?.into())
 }
 
 /// Converts a slice of bytes to a string slice without checking
@@ -141,7 +141,7 @@ pub fn from_utf8_mut(v: &mut [u8]) -> Result<&mut StringBase<[u8]>, Utf8Error> {
 pub const unsafe fn from_utf8_unchecked(v: &[u8]) -> &StringBase<[u8]> {
     // SAFETY: the caller must guarantee that the bytes `v` are valid UTF-8.
     // Also relies on `&str` and `&[u8]` having the same layout.
-    std::mem::transmute(v)
+    core::mem::transmute(v)
 }
 
 /// Converts a slice of bytes to a string slice without checking
@@ -176,5 +176,5 @@ pub const unsafe fn from_utf8_unchecked(v: &[u8]) -> &StringBase<[u8]> {
 pub const unsafe fn from_utf8_unchecked_mut(v: &mut [u8]) -> &mut StringBase<[u8]> {
     // SAFETY: the caller must guarantee that the bytes `v` are valid UTF-8.
     // Also relies on `&str` and `&[u8]` having the same layout.
-    std::mem::transmute(v)
+    core::mem::transmute(v)
 }

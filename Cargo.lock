@@ -10,7 +10,7 @@ checksum = "588a1520e3da2e66e8011a25115c0f683ca4ee5831c9fc90225ae63da2df671b"
 
 [[package]]
 name = "generic-str"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "cl-generic-vec",
 ]
