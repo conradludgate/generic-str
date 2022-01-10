@@ -4,13 +4,13 @@ version = 3
 
 [[package]]
 name = "cl-generic-vec"
-version = "0.3.1"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8fc3cc8cdc1acb2d5a03cc58ef1cc1202bd1cf1f110db303e5b978f704ee4a1b"
+checksum = "928bbac2485cd21ba262e5f0148eebd4753e1a64db262048c47bb46330d9c7b9"
 
 [[package]]
 name = "generic-str"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "cl-generic-vec",
 ]

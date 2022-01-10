@@ -36,8 +36,8 @@ So, now I have
 
 ```rust
 use generic_vec::{GenericVec, raw::Heap};
-pub type String<A = Global> = OwnedString<Box<[MaybeUninit<u8>], A>>;
-pub type OwnedString<S> = StringBase<GenericVec<S>>;
+pub type String<A = Global> = OwnedString<u8, Box<[MaybeUninit<u8>], A>>;
+pub type OwnedString<S> = StringBase<GenericVec<u8, S>>;
 ```
 
 Which might look more complicated, and you'd be right. Implementation wise, `GenericVec<U, Heap<U, A>>` is supposed to be identical to `Vec<u8>` so it should be functionally the same as before.

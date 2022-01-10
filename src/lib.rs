@@ -24,15 +24,21 @@
 #![feature(unicode_internals)]
 
 mod convert;
+mod owned_utf32;
 mod owned_utf8;
+mod slice_utf32;
+mod slice_utf32_index;
 mod slice_utf8;
 mod slice_utf8_index;
 mod string_base;
+mod traits_utf32;
 mod traits_utf8;
 mod validation;
 
 pub use convert::*;
+pub use owned_utf32::*;
 pub use owned_utf8::*;
+pub use slice_utf32::*;
 pub use slice_utf8::*;
 pub use string_base::*;
 

@@ -3,7 +3,7 @@ use core::{
     str::{Bytes, CharIndices, Chars},
 };
 
-use crate::{StringSlice, from_utf8_unchecked_mut, validation::truncate_to_char_boundary};
+use crate::{from_utf8_unchecked_mut, validation::truncate_to_char_boundary, StringSlice};
 
 #[allow(non_camel_case_types)]
 /// Exactly the same as [`std::primitive::str`], except generic
@@ -326,10 +326,7 @@ impl str {
     /// }
     /// ```
     #[inline]
-    pub unsafe fn get_unchecked_mut<I: SliceIndex<Self>>(
-        &mut self,
-        i: I,
-    ) -> &mut I::Output {
+    pub unsafe fn get_unchecked_mut<I: SliceIndex<Self>>(&mut self, i: I) -> &mut I::Output {
         // SAFETY: the caller must uphold the safety contract for `get_unchecked_mut`;
         // the slice is dereferencable because `self` is a safe reference.
         // The returned pointer is safe because impls of `SliceIndex` have to guarantee that it is.
@@ -611,7 +608,6 @@ impl str {
         let me = unsafe { self.as_bytes_mut() };
         me.make_ascii_lowercase()
     }
-
 
     /// Returns the lowercase equivalent of this string slice, as a new [`String`].
     ///

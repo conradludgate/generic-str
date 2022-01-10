@@ -1,6 +1,6 @@
 use core::slice::SliceIndex;
 
-use crate::{slice_utf8::slice_error_fail, string_base::StringBase};
+use crate::string_base::StringBase;
 
 /// Implements substring slicing with syntax `&self[..]` or `&mut self[..]`.
 ///
@@ -14,30 +14,30 @@ use crate::{slice_utf8::slice_error_fail, string_base::StringBase};
 /// direct implementation of `Index` and `IndexMut`.
 ///
 /// Equivalent to `&self[0 .. len]` or `&mut self[0 .. len]`.
-unsafe impl SliceIndex<StringBase<[u8]>> for core::ops::RangeFull {
-    type Output = StringBase<[u8]>;
+unsafe impl SliceIndex<StringBase<[char]>> for core::ops::RangeFull {
+    type Output = StringBase<[char]>;
     #[inline]
-    fn get(self, slice: &StringBase<[u8]>) -> Option<&Self::Output> {
+    fn get(self, slice: &StringBase<[char]>) -> Option<&Self::Output> {
         Some(slice)
     }
     #[inline]
-    fn get_mut(self, slice: &mut StringBase<[u8]>) -> Option<&mut Self::Output> {
+    fn get_mut(self, slice: &mut StringBase<[char]>) -> Option<&mut Self::Output> {
         Some(slice)
     }
     #[inline]
-    unsafe fn get_unchecked(self, slice: *const StringBase<[u8]>) -> *const Self::Output {
+    unsafe fn get_unchecked(self, slice: *const StringBase<[char]>) -> *const Self::Output {
         slice
     }
     #[inline]
-    unsafe fn get_unchecked_mut(self, slice: *mut StringBase<[u8]>) -> *mut Self::Output {
+    unsafe fn get_unchecked_mut(self, slice: *mut StringBase<[char]>) -> *mut Self::Output {
         slice
     }
     #[inline]
-    fn index(self, slice: &StringBase<[u8]>) -> &Self::Output {
+    fn index(self, slice: &StringBase<[char]>) -> &Self::Output {
         slice
     }
     #[inline]
-    fn index_mut(self, slice: &mut StringBase<[u8]>) -> &mut Self::Output {
+    fn index_mut(self, slice: &mut StringBase<[char]>) -> &mut Self::Output {
         slice
     }
 }
@@ -55,50 +55,20 @@ unsafe impl SliceIndex<StringBase<[u8]>> for core::ops::RangeFull {
 ///
 /// # Panics
 ///
-/// Panics if `begin` or `end` does not point to the starting byte offset of
-/// a character (as defined by `is_char_boundary`), if `begin > end`, or if
-/// `end > len`.
-///
-/// # Examples
-///
-/// ```
-/// let s = "Löwe 老虎 Léopard";
-/// assert_eq!(&s[0 .. 1], "L");
-///
-/// assert_eq!(&s[1 .. 9], "öwe 老");
-///
-/// // these will panic:
-/// // byte 2 lies within `ö`:
-/// // &s[2 ..3];
-///
-/// // byte 8 lies within `老`
-/// // &s[1 .. 8];
-///
-/// // byte 100 is outside the string
-/// // &s[3 .. 100];
-/// ```
-unsafe impl SliceIndex<StringBase<[u8]>> for core::ops::Range<usize> {
-    type Output = StringBase<[u8]>;
+/// Panics if `begin > end`, or if `end > len`.
+unsafe impl SliceIndex<StringBase<[char]>> for core::ops::Range<usize> {
+    type Output = StringBase<[char]>;
     #[inline]
-    fn get(self, slice: &StringBase<[u8]>) -> Option<&Self::Output> {
-        if self.start <= self.end
-            && slice.is_char_boundary(self.start)
-            && slice.is_char_boundary(self.end)
-        {
-            // SAFETY: just checked that `start` and `end` are on a char boundary,
-            // and we are passing in a safe reference, so the return value will also be one.
-            // We also checked char boundaries, so this is valid UTF-8.
+    fn get(self, slice: &StringBase<[char]>) -> Option<&Self::Output> {
+        if self.start <= self.end && self.end <= slice.len() {
             Some(unsafe { &*self.get_unchecked(slice) })
         } else {
             None
         }
     }
     #[inline]
-    fn get_mut(self, slice: &mut StringBase<[u8]>) -> Option<&mut Self::Output> {
-        if self.start <= self.end
-            && slice.is_char_boundary(self.start)
-            && slice.is_char_boundary(self.end)
-        {
+    fn get_mut(self, slice: &mut StringBase<[char]>) -> Option<&mut Self::Output> {
+        if self.start <= self.end && self.end <= slice.len() {
             // SAFETY: just checked that `start` and `end` are on a char boundary.
             // We know the pointer is unique because we got it from `slice`.
             Some(unsafe { &mut *self.get_unchecked_mut(slice) })
@@ -107,43 +77,47 @@ unsafe impl SliceIndex<StringBase<[u8]>> for core::ops::Range<usize> {
         }
     }
     #[inline]
-    unsafe fn get_unchecked(self, slice: *const StringBase<[u8]>) -> *const Self::Output {
-        let slice = slice as *const [u8];
+    unsafe fn get_unchecked(self, slice: *const StringBase<[char]>) -> *const Self::Output {
+        let slice = slice as *const [char];
         // SAFETY: the caller guarantees that `self` is in bounds of `slice`
         // which satisfies all the conditions for `add`.
         let ptr = slice.as_ptr().add(self.start);
         let len = self.end - self.start;
-        core::ptr::slice_from_raw_parts(ptr, len) as *const StringBase<[u8]>
+        core::ptr::slice_from_raw_parts(ptr, len) as *const StringBase<[char]>
     }
     #[inline]
-    unsafe fn get_unchecked_mut(self, slice: *mut StringBase<[u8]>) -> *mut Self::Output {
-        let slice = slice as *mut [u8];
+    unsafe fn get_unchecked_mut(self, slice: *mut StringBase<[char]>) -> *mut Self::Output {
+        let slice = slice as *mut [char];
         // SAFETY: see comments for `get_unchecked`.
         let ptr = slice.as_mut_ptr().add(self.start);
         let len = self.end - self.start;
-        core::ptr::slice_from_raw_parts_mut(ptr, len) as *mut StringBase<[u8]>
+        core::ptr::slice_from_raw_parts_mut(ptr, len) as *mut StringBase<[char]>
     }
     #[inline]
-    fn index(self, slice: &StringBase<[u8]>) -> &Self::Output {
-        let (start, end) = (self.start, self.end);
+    fn index(self, slice: &StringBase<[char]>) -> &Self::Output {
+        let end = self.end;
         match self.get(slice) {
             Some(s) => s,
-            None => slice_error_fail(slice, start, end),
+
+            #[cfg(feature = "alloc")]
+            None => panic!("char index {} is out of bounds of `{}`", end, &*slice),
+
+            #[cfg(not(feature = "alloc"))]
+            None => panic!("char index {} is out of bounds", end),
         }
     }
     #[inline]
-    fn index_mut(self, slice: &mut StringBase<[u8]>) -> &mut Self::Output {
-        // is_char_boundary checks that the index is in [0, .len()]
-        // cannot reuse `get` as above, because of NLL trouble
-        if self.start <= self.end
-            && slice.is_char_boundary(self.start)
-            && slice.is_char_boundary(self.end)
-        {
-            // SAFETY: just checked that `start` and `end` are on a char boundary,
-            // and we are passing in a safe reference, so the return value will also be one.
+    fn index_mut(self, slice: &mut StringBase<[char]>) -> &mut Self::Output {
+        if self.start <= self.end && self.end <= slice.len() {
+            // SAFETY: just checked that `start` and `end` are on a char boundary.
+            // We know the pointer is unique because we got it from `slice`.
             unsafe { &mut *self.get_unchecked_mut(slice) }
         } else {
-            slice_error_fail(slice, self.start, self.end)
+            #[cfg(feature = "alloc")]
+            panic!("char index {} is out of bounds of `{}`", self.end, &*slice);
+
+            #[cfg(not(feature = "alloc"))]
+            panic!("char index {} is out of bounds", self.end);
         }
     }
 }
@@ -151,7 +125,7 @@ unsafe impl SliceIndex<StringBase<[u8]>> for core::ops::Range<usize> {
 /// Implements substring slicing with syntax `&self[.. end]` or `&mut
 /// self[.. end]`.
 ///
-/// Returns a slice of the given string from the byte range [`0`, `end`).
+/// Returns a slice of the given string from the char range [`0`, `end`).
 /// Equivalent to `&self[0 .. end]` or `&mut self[0 .. end]`.
 ///
 /// This operation is *O*(1).
@@ -161,13 +135,12 @@ unsafe impl SliceIndex<StringBase<[u8]>> for core::ops::Range<usize> {
 ///
 /// # Panics
 ///
-/// Panics if `end` does not point to the starting byte offset of a
-/// character (as defined by `is_char_boundary`), or if `end > len`.
-unsafe impl SliceIndex<StringBase<[u8]>> for core::ops::RangeTo<usize> {
-    type Output = StringBase<[u8]>;
+/// Panics if `end > len`.
+unsafe impl SliceIndex<StringBase<[char]>> for core::ops::RangeTo<usize> {
+    type Output = StringBase<[char]>;
     #[inline]
-    fn get(self, slice: &StringBase<[u8]>) -> Option<&Self::Output> {
-        if slice.is_char_boundary(self.end) {
+    fn get(self, slice: &StringBase<[char]>) -> Option<&Self::Output> {
+        if self.end <= slice.len() {
             // SAFETY: just checked that `end` is on a char boundary,
             // and we are passing in a safe reference, so the return value will also be one.
             Some(unsafe { &*self.get_unchecked(slice) })
@@ -176,8 +149,8 @@ unsafe impl SliceIndex<StringBase<[u8]>> for core::ops::RangeTo<usize> {
         }
     }
     #[inline]
-    fn get_mut(self, slice: &mut StringBase<[u8]>) -> Option<&mut Self::Output> {
-        if slice.is_char_boundary(self.end) {
+    fn get_mut(self, slice: &mut StringBase<[char]>) -> Option<&mut Self::Output> {
+        if self.end <= slice.len() {
             // SAFETY: just checked that `end` is on a char boundary,
             // and we are passing in a safe reference, so the return value will also be one.
             Some(unsafe { &mut *self.get_unchecked_mut(slice) })
@@ -186,33 +159,42 @@ unsafe impl SliceIndex<StringBase<[u8]>> for core::ops::RangeTo<usize> {
         }
     }
     #[inline]
-    unsafe fn get_unchecked(self, slice: *const StringBase<[u8]>) -> *const Self::Output {
-        let slice = slice as *const [u8];
+    unsafe fn get_unchecked(self, slice: *const StringBase<[char]>) -> *const Self::Output {
+        let slice = slice as *const [char];
         let ptr = slice.as_ptr();
-        core::ptr::slice_from_raw_parts(ptr, self.end) as *const StringBase<[u8]>
+        core::ptr::slice_from_raw_parts(ptr, self.end) as *const StringBase<[char]>
     }
     #[inline]
-    unsafe fn get_unchecked_mut(self, slice: *mut StringBase<[u8]>) -> *mut Self::Output {
-        let slice = slice as *mut [u8];
+    unsafe fn get_unchecked_mut(self, slice: *mut StringBase<[char]>) -> *mut Self::Output {
+        let slice = slice as *mut [char];
         let ptr = slice.as_mut_ptr();
-        core::ptr::slice_from_raw_parts_mut(ptr, self.end) as *mut StringBase<[u8]>
+        core::ptr::slice_from_raw_parts_mut(ptr, self.end) as *mut StringBase<[char]>
     }
     #[inline]
-    fn index(self, slice: &StringBase<[u8]>) -> &Self::Output {
+    fn index(self, slice: &StringBase<[char]>) -> &Self::Output {
         let end = self.end;
         match self.get(slice) {
             Some(s) => s,
-            None => slice_error_fail(slice, 0, end),
+
+            #[cfg(feature = "alloc")]
+            None => panic!("char index {} is out of bounds of `{}`", end, &*slice),
+
+            #[cfg(not(feature = "alloc"))]
+            None => panic!("char index {} is out of bounds", end),
         }
     }
     #[inline]
-    fn index_mut(self, slice: &mut StringBase<[u8]>) -> &mut Self::Output {
-        if slice.is_char_boundary(self.end) {
+    fn index_mut(self, slice: &mut StringBase<[char]>) -> &mut Self::Output {
+        if self.end <= slice.len() {
             // SAFETY: just checked that `end` is on a char boundary,
             // and we are passing in a safe reference, so the return value will also be one.
             unsafe { &mut *self.get_unchecked_mut(slice) }
         } else {
-            slice_error_fail(slice, 0, self.end)
+            #[cfg(feature = "alloc")]
+            panic!("char index {} is out of bounds of `{}`", self.end, &*slice);
+
+            #[cfg(not(feature = "alloc"))]
+            panic!("char index {} is out of bounds", self.end);
         }
     }
 }
@@ -220,7 +202,7 @@ unsafe impl SliceIndex<StringBase<[u8]>> for core::ops::RangeTo<usize> {
 /// Implements substring slicing with syntax `&self[begin ..]` or `&mut
 /// self[begin ..]`.
 ///
-/// Returns a slice of the given string from the byte range [`begin`,
+/// Returns a slice of the given string from the char range [`begin`,
 /// `len`). Equivalent to `&self[begin .. len]` or `&mut self[begin ..
 /// len]`.
 ///
@@ -231,13 +213,12 @@ unsafe impl SliceIndex<StringBase<[u8]>> for core::ops::RangeTo<usize> {
 ///
 /// # Panics
 ///
-/// Panics if `begin` does not point to the starting byte offset of
-/// a character (as defined by `is_char_boundary`), or if `begin > len`.
-unsafe impl SliceIndex<StringBase<[u8]>> for core::ops::RangeFrom<usize> {
-    type Output = StringBase<[u8]>;
+/// Panics if `begin > len`.
+unsafe impl SliceIndex<StringBase<[char]>> for core::ops::RangeFrom<usize> {
+    type Output = StringBase<[char]>;
     #[inline]
-    fn get(self, slice: &StringBase<[u8]>) -> Option<&Self::Output> {
-        if slice.is_char_boundary(self.start) {
+    fn get(self, slice: &StringBase<[char]>) -> Option<&Self::Output> {
+        if self.start <= slice.len() {
             // SAFETY: just checked that `start` is on a char boundary,
             // and we are passing in a safe reference, so the return value will also be one.
             Some(unsafe { &*self.get_unchecked(slice) })
@@ -246,8 +227,8 @@ unsafe impl SliceIndex<StringBase<[u8]>> for core::ops::RangeFrom<usize> {
         }
     }
     #[inline]
-    fn get_mut(self, slice: &mut StringBase<[u8]>) -> Option<&mut Self::Output> {
-        if slice.is_char_boundary(self.start) {
+    fn get_mut(self, slice: &mut StringBase<[char]>) -> Option<&mut Self::Output> {
+        if self.start <= slice.len() {
             // SAFETY: just checked that `start` is on a char boundary,
             // and we are passing in a safe reference, so the return value will also be one.
             Some(unsafe { &mut *self.get_unchecked_mut(slice) })
@@ -256,38 +237,50 @@ unsafe impl SliceIndex<StringBase<[u8]>> for core::ops::RangeFrom<usize> {
         }
     }
     #[inline]
-    unsafe fn get_unchecked(self, slice: *const StringBase<[u8]>) -> *const Self::Output {
-        let slice = slice as *const [u8];
+    unsafe fn get_unchecked(self, slice: *const StringBase<[char]>) -> *const Self::Output {
+        let slice = slice as *const [char];
         // SAFETY: the caller guarantees that `self` is in bounds of `slice`
         // which satisfies all the conditions for `add`.
         let ptr = slice.as_ptr().add(self.start);
         let len = slice.len() - self.start;
-        core::ptr::slice_from_raw_parts(ptr, len) as *const StringBase<[u8]>
+        core::ptr::slice_from_raw_parts(ptr, len) as *const StringBase<[char]>
     }
     #[inline]
-    unsafe fn get_unchecked_mut(self, slice: *mut StringBase<[u8]>) -> *mut Self::Output {
-        let slice = slice as *mut [u8];
+    unsafe fn get_unchecked_mut(self, slice: *mut StringBase<[char]>) -> *mut Self::Output {
+        let slice = slice as *mut [char];
         // SAFETY: identical to `get_unchecked`.
         let ptr = slice.as_mut_ptr().add(self.start);
         let len = slice.len() - self.start;
-        core::ptr::slice_from_raw_parts_mut(ptr, len) as *mut StringBase<[u8]>
+        core::ptr::slice_from_raw_parts_mut(ptr, len) as *mut StringBase<[char]>
     }
     #[inline]
-    fn index(self, slice: &StringBase<[u8]>) -> &Self::Output {
-        let (start, end) = (self.start, slice.len());
+    fn index(self, slice: &StringBase<[char]>) -> &Self::Output {
+        let start = self.start;
         match self.get(slice) {
             Some(s) => s,
-            None => slice_error_fail(slice, start, end),
+
+            #[cfg(feature = "alloc")]
+            None => panic!("char index {} is out of bounds of `{}`", start, &*slice),
+
+            #[cfg(not(feature = "alloc"))]
+            None => panic!("char index {} is out of bounds", start),
         }
     }
     #[inline]
-    fn index_mut(self, slice: &mut StringBase<[u8]>) -> &mut Self::Output {
-        if slice.is_char_boundary(self.start) {
+    fn index_mut(self, slice: &mut StringBase<[char]>) -> &mut Self::Output {
+        if self.start <= slice.len() {
             // SAFETY: just checked that `start` is on a char boundary,
             // and we are passing in a safe reference, so the return value will also be one.
             unsafe { &mut *self.get_unchecked_mut(slice) }
         } else {
-            slice_error_fail(slice, self.start, slice.len())
+            #[cfg(feature = "alloc")]
+            panic!(
+                "char index {} is out of bounds of `{}`",
+                self.start, &*slice
+            );
+
+            #[cfg(not(feature = "alloc"))]
+            panic!("char index {} is out of bounds", self.start);
         }
     }
 }
@@ -306,10 +299,10 @@ unsafe impl SliceIndex<StringBase<[u8]>> for core::ops::RangeFrom<usize> {
 /// Panics if `end` does not point to the ending byte offset of a character
 /// (`end + 1` is either a starting byte offset as defined by
 /// `is_char_boundary`, or equal to `len`), or if `end >= len`.
-unsafe impl SliceIndex<StringBase<[u8]>> for core::ops::RangeToInclusive<usize> {
-    type Output = StringBase<[u8]>;
+unsafe impl SliceIndex<StringBase<[char]>> for core::ops::RangeToInclusive<usize> {
+    type Output = StringBase<[char]>;
     #[inline]
-    fn get(self, slice: &StringBase<[u8]>) -> Option<&Self::Output> {
+    fn get(self, slice: &StringBase<[char]>) -> Option<&Self::Output> {
         if self.end == usize::MAX {
             None
         } else {
@@ -317,7 +310,7 @@ unsafe impl SliceIndex<StringBase<[u8]>> for core::ops::RangeToInclusive<usize> 
         }
     }
     #[inline]
-    fn get_mut(self, slice: &mut StringBase<[u8]>) -> Option<&mut Self::Output> {
+    fn get_mut(self, slice: &mut StringBase<[char]>) -> Option<&mut Self::Output> {
         if self.end == usize::MAX {
             None
         } else {
@@ -325,24 +318,24 @@ unsafe impl SliceIndex<StringBase<[u8]>> for core::ops::RangeToInclusive<usize> 
         }
     }
     #[inline]
-    unsafe fn get_unchecked(self, slice: *const StringBase<[u8]>) -> *const Self::Output {
+    unsafe fn get_unchecked(self, slice: *const StringBase<[char]>) -> *const Self::Output {
         // SAFETY: the caller must uphold the safety contract for `get_unchecked`.
         (..self.end + 1).get_unchecked(slice)
     }
     #[inline]
-    unsafe fn get_unchecked_mut(self, slice: *mut StringBase<[u8]>) -> *mut Self::Output {
+    unsafe fn get_unchecked_mut(self, slice: *mut StringBase<[char]>) -> *mut Self::Output {
         // SAFETY: the caller must uphold the safety contract for `get_unchecked_mut`.
         (..self.end + 1).get_unchecked_mut(slice)
     }
     #[inline]
-    fn index(self, slice: &StringBase<[u8]>) -> &Self::Output {
+    fn index(self, slice: &StringBase<[char]>) -> &Self::Output {
         if self.end == usize::MAX {
             str_index_overflow_fail();
         }
         (..self.end + 1).index(slice)
     }
     #[inline]
-    fn index_mut(self, slice: &mut StringBase<[u8]>) -> &mut Self::Output {
+    fn index_mut(self, slice: &mut StringBase<[char]>) -> &mut Self::Output {
         if self.end == usize::MAX {
             str_index_overflow_fail();
         }

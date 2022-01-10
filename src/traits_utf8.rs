@@ -1,4 +1,4 @@
-use generic_vec::{raw::Storage, GenericVec};
+use generic_vec::raw::Storage;
 
 #[cfg(feature = "alloc")]
 use generic_vec::HeapVec;
@@ -8,7 +8,7 @@ use std::{
     ops::{Add, AddAssign},
 };
 
-use crate::string_base::StringBase;
+use crate::{string_base::StringBase, OwnedString};
 use core::{
     ops::{Index, IndexMut},
     slice::SliceIndex,
@@ -48,7 +48,7 @@ where
     }
 }
 
-impl<S: ?Sized + Storage<Item = u8>> core::fmt::Debug for StringBase<GenericVec<S>> {
+impl<S: ?Sized + Storage<Item = u8>> core::fmt::Debug for OwnedString<u8, S> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let s: &StringBase<[S::Item]> = self.as_ref();
         let s: &str = s.as_ref();
@@ -56,7 +56,7 @@ impl<S: ?Sized + Storage<Item = u8>> core::fmt::Debug for StringBase<GenericVec<
     }
 }
 
-impl<S: ?Sized + Storage<Item = u8>> core::fmt::Display for StringBase<GenericVec<S>> {
+impl<S: ?Sized + Storage<Item = u8>> core::fmt::Display for OwnedString<u8, S> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let s: &StringBase<[S::Item]> = self.as_ref();
         let s: &str = s.as_ref();

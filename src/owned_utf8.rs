@@ -2,7 +2,7 @@ use core::str::Utf8Error;
 use std::mem::MaybeUninit;
 
 use generic_vec::{
-    raw::{Storage, StorageWithCapacity, AllocResult},
+    raw::{AllocResult, Storage, StorageWithCapacity},
     ArrayVec, GenericVec,
 };
 
@@ -20,7 +20,7 @@ use crate::{string_base::StringBase, OwnedString};
 /// assert_eq!(s, <&str>::from("foobar"));
 /// ```
 #[cfg(feature = "alloc")]
-pub type String<A = Global> = OwnedString<Box<[MaybeUninit<u8>], A>>;
+pub type String<A = Global> = OwnedString<u8, Box<[MaybeUninit<u8>], A>>;
 
 /// Same API as [`String`] but without any re-allocation. Can only hold up to `N` bytes
 ///
@@ -36,7 +36,7 @@ pub type String<A = Global> = OwnedString<Box<[MaybeUninit<u8>], A>>;
 /// assert_eq!(t, <&str>::from("foo"));
 /// assert_eq!(s, <&str>::from("foobar"));
 /// ```
-pub type ArrayString<const N: usize> = OwnedString<[MaybeUninit<u8>; N]>;
+pub type ArrayString<const N: usize> = OwnedString<u8, [MaybeUninit<u8>; N]>;
 
 #[cfg(feature = "alloc")]
 impl String {
@@ -136,7 +136,7 @@ impl<const N: usize> ArrayString<N> {
 
 #[derive(PartialEq, Eq)]
 pub struct FromUtf8Error<S: Storage<Item = u8>> {
-    bytes: GenericVec<S>,
+    bytes: GenericVec<u8, S>,
     error: Utf8Error,
 }
 
@@ -150,7 +150,7 @@ impl<S: Storage<Item = u8>> fmt::Debug for FromUtf8Error<S> {
     }
 }
 
-impl<S: ?Sized + Storage<Item = u8>> OwnedString<S> {
+impl<S: ?Sized + Storage<Item = u8>> OwnedString<u8, S> {
     /// Converts a vector of bytes to a `String`.
     ///
     /// A string ([`String`]) is made of bytes ([`u8`]), and a vector of bytes
@@ -212,7 +212,7 @@ impl<S: ?Sized + Storage<Item = u8>> OwnedString<S> {
     /// [`&str`]: prim@str
     /// [`into_bytes`]: StringBase::into_bytes
     #[inline]
-    pub fn from_utf8(vec: GenericVec<S>) -> Result<Self, FromUtf8Error<S>>
+    pub fn from_utf8(vec: GenericVec<S::Item, S>) -> Result<Self, FromUtf8Error<S>>
     where
         S: Sized,
     {
@@ -254,7 +254,7 @@ impl<S: ?Sized + Storage<Item = u8>> OwnedString<S> {
     /// assert_eq!(sparkle_heart, <&str>::from("💖"));
     /// ```
     #[inline]
-    pub unsafe fn from_utf8_unchecked(vec: GenericVec<S>) -> Self
+    pub unsafe fn from_utf8_unchecked(vec: GenericVec<S::Item, S>) -> Self
     where
         S: Sized,
     {
@@ -276,7 +276,7 @@ impl<S: ?Sized + Storage<Item = u8>> OwnedString<S> {
     /// assert_eq!(&[104, 101, 108, 108, 111][..], &bytes[..]);
     /// ```
     #[inline]
-    pub fn into_bytes(self) -> GenericVec<S>
+    pub fn into_bytes(self) -> GenericVec<S::Item, S>
     where
         S: Sized,
     {
@@ -629,7 +629,7 @@ impl<S: ?Sized + Storage<Item = u8>> OwnedString<S> {
     /// assert_eq!(s, <&str>::from("olleh"));
     /// ```
     #[inline]
-    pub unsafe fn as_mut_vec(&mut self) -> &mut GenericVec<S> {
+    pub unsafe fn as_mut_vec(&mut self) -> &mut GenericVec<S::Item, S> {
         &mut self.storage
     }
 
@@ -662,7 +662,7 @@ impl<S: ?Sized + Storage<Item = u8>> OwnedString<S> {
     pub fn split_off<B: ?Sized + StorageWithCapacity<Item = u8>>(
         &mut self,
         at: usize,
-    ) -> StringBase<GenericVec<B>> {
+    ) -> StringBase<GenericVec<S::Item, B>> {
         assert!(self.is_char_boundary(at));
         let other = self.storage.split_off(at);
         unsafe { StringBase::from_utf8_unchecked(other) }
