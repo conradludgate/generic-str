@@ -1,12 +1,11 @@
 use generic_vec::{raw::Storage, GenericVec};
 
 #[cfg(feature = "alloc")]
-use generic_vec::{raw::Heap, HeapVec};
+use generic_vec::HeapVec;
 #[cfg(feature = "alloc")]
 use std::{
     borrow::Cow,
     ops::{Add, AddAssign},
-    ptr::NonNull,
 };
 
 use crate::string_base::StringBase;
@@ -49,17 +48,17 @@ where
     }
 }
 
-impl<S: ?Sized + Storage<u8>> core::fmt::Debug for StringBase<GenericVec<u8, S>> {
+impl<S: ?Sized + Storage<Item = u8>> core::fmt::Debug for StringBase<GenericVec<S>> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let s: &StringBase<[u8]> = self.as_ref();
+        let s: &StringBase<[S::Item]> = self.as_ref();
         let s: &str = s.as_ref();
         write!(f, "{:?}", s)
     }
 }
 
-impl<S: ?Sized + Storage<u8>> core::fmt::Display for StringBase<GenericVec<u8, S>> {
+impl<S: ?Sized + Storage<Item = u8>> core::fmt::Display for StringBase<GenericVec<S>> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let s: &StringBase<[u8]> = self.as_ref();
+        let s: &StringBase<[S::Item]> = self.as_ref();
         let s: &str = s.as_ref();
         write!(f, "{}", s)
     }
@@ -84,12 +83,10 @@ impl From<String> for StringBase<HeapVec<u8>> {
     fn from(s: String) -> Self {
         let (ptr, len, capacity) = s.into_raw_parts();
         unsafe {
-            Self {
-                storage: HeapVec::<u8>::from_raw_parts(
-                    len,
-                    Heap::<u8>::from_raw_parts(NonNull::new_unchecked(ptr), capacity),
-                ),
-            }
+            let ptr = std::ptr::slice_from_raw_parts_mut(ptr.cast(), capacity);
+            let storage = Box::from_raw(ptr);
+            let storage = HeapVec::from_raw_parts(len, storage);
+            Self { storage }
         }
     }
 }

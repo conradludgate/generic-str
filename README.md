@@ -27,15 +27,6 @@ type String = StringBase<Vec<u8>>;
 
 So that's what this is. It's mostly up to feature parity with the standard library strings. A lot of the standard trait implementations are there too.
 
-I've also implemented
-
-```rust
-type str32 = StringBase<[char]>;
-type String32 = StringBase<Vec<char>>;
-```
-
-for utf-32 applications.
-
 ## generic-vec
 
 So there was some [discussion about whether `Allocator` was the best abstraction for customising `Vec` storage](https://internals.rust-lang.org/t/is-custom-allocators-the-right-abstraction/13460).
@@ -45,8 +36,8 @@ So, now I have
 
 ```rust
 use generic_vec::{GenericVec, raw::Heap};
-pub type String<A = Global> = OwnedString<u8, Heap<u8, A>>;
-pub type OwnedString<U, S> = StringBase<GenericVec<U, S>>;
+pub type String<A = Global> = OwnedString<Box<[MaybeUninit<u8>], A>>;
+pub type OwnedString<S> = StringBase<GenericVec<S>>;
 ```
 
 Which might look more complicated, and you'd be right. Implementation wise, `GenericVec<U, Heap<U, A>>` is supposed to be identical to `Vec<u8>` so it should be functionally the same as before.
@@ -54,7 +45,7 @@ Which might look more complicated, and you'd be right. Implementation wise, `Gen
 But, with the added power of this storage backed system, it allows for static allocated but resizable† strings!
 
 ```rust
-pub type ArrayString<const N: usize> = OwnedString<u8, UninitBuffer<[u8; N], u8>>;
+pub type ArrayString<const N: usize> = OwnedString<[MaybeUninit<u8>; N]>;
 ```
 
 And I get to re-use all of the same code from when implementing `String`,

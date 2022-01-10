@@ -16,17 +16,17 @@ pub struct StringBase<S: ?Sized> {
     pub(crate) storage: S,
 }
 
-impl<S: StorageWithCapacity<T>, T> StringBase<GenericVec<T, S>> {
+impl<S: StorageWithCapacity> StringBase<GenericVec<S>> {
     #[inline]
     pub fn new_with_capacity(capacity: usize) -> Self {
         Self::with_storage(S::with_capacity(capacity))
     }
 }
 
-pub type OwnedString<U, S> = StringBase<GenericVec<U, S>>;
+pub type OwnedString<S> = StringBase<GenericVec<S>>;
 pub type StringSlice<U> = StringBase<[U]>;
 
-impl<S: ?Sized + Storage<T>, T> StringBase<GenericVec<T, S>> {
+impl<S: ?Sized + Storage> StringBase<GenericVec<S>> {
     /// Creates a new empty `String` with a particular storage backend.
     ///
     /// `String`s have an internal buffer to hold their data. The capacity is
@@ -66,7 +66,7 @@ impl<S: ?Sized + Storage<T>, T> StringBase<GenericVec<T, S>> {
     /// s.push('a');
     /// ```
     #[inline]
-    pub const fn with_storage(storage: S) -> Self
+    pub fn with_storage(storage: S) -> Self
     where
         S: Sized,
     {
@@ -124,36 +124,48 @@ impl<T: Clone> ToOwned for StringBase<[T]> {
     }
 }
 
-impl<S: ?Sized + Storage<U>, T: ?Sized + Storage<U>, U> PartialEq<OwnedString<U, T>>
-    for StringBase<GenericVec<U, S>>
+impl<S: ?Sized + Storage, T: ?Sized + Storage> PartialEq<OwnedString<T>>
+    for StringBase<GenericVec<S>>
 where
-    GenericVec<U, S>: PartialEq<GenericVec<U, T>>,
+    GenericVec<S>: PartialEq<GenericVec<T>>,
 {
-    fn eq(&self, other: &OwnedString<U, T>) -> bool {
+    fn eq(&self, other: &OwnedString<T>) -> bool {
         self.storage.eq(&other.storage)
     }
 }
 
-impl<S: ?Sized + Storage<U>, U: PartialEq> PartialEq<OwnedString<U, S>> for StringSlice<U> {
-    fn eq(&self, other: &OwnedString<U, S>) -> bool {
+impl<S: ?Sized + Storage> PartialEq<OwnedString<S>> for StringSlice<S::Item>
+where
+    S::Item: PartialEq,
+{
+    fn eq(&self, other: &OwnedString<S>) -> bool {
         other.storage.eq(&self.storage)
     }
 }
 
-impl<S: ?Sized + Storage<U>, U: PartialEq> PartialEq<OwnedString<U, S>> for &StringSlice<U> {
-    fn eq(&self, other: &OwnedString<U, S>) -> bool {
+impl<S: ?Sized + Storage> PartialEq<OwnedString<S>> for &StringSlice<S::Item>
+where
+    S::Item: PartialEq,
+{
+    fn eq(&self, other: &OwnedString<S>) -> bool {
         other.storage.eq(&self.storage)
     }
 }
 
-impl<S: ?Sized + Storage<U>, U: PartialEq> PartialEq<StringSlice<U>> for OwnedString<U, S> {
-    fn eq(&self, other: &StringSlice<U>) -> bool {
+impl<S: ?Sized + Storage> PartialEq<StringSlice<S::Item>> for OwnedString<S>
+where
+    S::Item: PartialEq,
+{
+    fn eq(&self, other: &StringSlice<S::Item>) -> bool {
         self.storage.eq(&other.storage)
     }
 }
 
-impl<S: ?Sized + Storage<U>, U: PartialEq> PartialEq<&StringSlice<U>> for OwnedString<U, S> {
-    fn eq(&self, other: &&StringSlice<U>) -> bool {
+impl<S: ?Sized + Storage> PartialEq<&StringSlice<S::Item>> for OwnedString<S>
+where
+    S::Item: PartialEq,
+{
+    fn eq(&self, other: &&StringSlice<S::Item>) -> bool {
         self.storage.eq(&other.storage)
     }
 }
@@ -164,39 +176,51 @@ impl<U: PartialEq> PartialEq<StringSlice<U>> for StringSlice<U> {
     }
 }
 
-impl<S: ?Sized + Storage<U>, U: Eq> Eq for OwnedString<U, S> {}
+impl<S: ?Sized + Storage> Eq for OwnedString<S> where S::Item: Eq {}
 impl<U: Eq> Eq for StringSlice<U> {}
 
-impl<S: ?Sized + Storage<U>, T: ?Sized + Storage<U>, U> PartialOrd<OwnedString<U, T>>
-    for StringBase<GenericVec<U, S>>
+impl<S: ?Sized + Storage, T: ?Sized + Storage> PartialOrd<OwnedString<T>>
+    for StringBase<GenericVec<S>>
 where
-    GenericVec<U, S>: PartialOrd<GenericVec<U, T>>,
+    GenericVec<S>: PartialOrd<GenericVec<T>>,
 {
-    fn partial_cmp(&self, other: &OwnedString<U, T>) -> Option<Ordering> {
+    fn partial_cmp(&self, other: &OwnedString<T>) -> Option<Ordering> {
         self.storage.partial_cmp(&other.storage)
     }
 }
 
-impl<S: ?Sized + Storage<U>, U: PartialOrd> PartialOrd<OwnedString<U, S>> for StringSlice<U> {
-    fn partial_cmp(&self, other: &OwnedString<U, S>) -> Option<Ordering> {
+impl<S: ?Sized + Storage> PartialOrd<OwnedString<S>> for StringSlice<S::Item>
+where
+    S::Item: PartialOrd,
+{
+    fn partial_cmp(&self, other: &OwnedString<S>) -> Option<Ordering> {
         other.storage.partial_cmp(&self.storage)
     }
 }
 
-impl<S: ?Sized + Storage<U>, U: PartialOrd> PartialOrd<OwnedString<U, S>> for &StringSlice<U> {
-    fn partial_cmp(&self, other: &OwnedString<U, S>) -> Option<Ordering> {
+impl<S: ?Sized + Storage> PartialOrd<OwnedString<S>> for &StringSlice<S::Item>
+where
+    S::Item: PartialOrd,
+{
+    fn partial_cmp(&self, other: &OwnedString<S>) -> Option<Ordering> {
         other.storage.partial_cmp(&self.storage)
     }
 }
 
-impl<S: ?Sized + Storage<U>, U: PartialOrd> PartialOrd<StringSlice<U>> for OwnedString<U, S> {
-    fn partial_cmp(&self, other: &StringSlice<U>) -> Option<Ordering> {
+impl<S: ?Sized + Storage> PartialOrd<StringSlice<S::Item>> for OwnedString<S>
+where
+    S::Item: PartialOrd,
+{
+    fn partial_cmp(&self, other: &StringSlice<S::Item>) -> Option<Ordering> {
         self.storage.partial_cmp(&other.storage)
     }
 }
 
-impl<S: ?Sized + Storage<U>, U: PartialOrd> PartialOrd<&StringSlice<U>> for OwnedString<U, S> {
-    fn partial_cmp(&self, other: &&StringSlice<U>) -> Option<Ordering> {
+impl<S: ?Sized + Storage> PartialOrd<&StringSlice<S::Item>> for OwnedString<S>
+where
+    S::Item: PartialOrd,
+{
+    fn partial_cmp(&self, other: &&StringSlice<S::Item>) -> Option<Ordering> {
         self.storage.partial_cmp(&other.storage)
     }
 }
@@ -207,7 +231,10 @@ impl<U: PartialOrd> PartialOrd<StringSlice<U>> for StringSlice<U> {
     }
 }
 
-impl<S: ?Sized + Storage<U>, U: Ord> Ord for OwnedString<U, S> {
+impl<S: ?Sized + Storage> Ord for OwnedString<S>
+where
+    S::Item: Ord,
+{
     fn cmp(&self, other: &Self) -> Ordering {
         self.storage.cmp(&other.storage)
     }

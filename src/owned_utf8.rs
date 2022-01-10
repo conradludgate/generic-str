@@ -1,12 +1,11 @@
 use core::str::Utf8Error;
+use std::mem::MaybeUninit;
 
 use generic_vec::{
-    raw::{Storage, StorageWithCapacity, UninitBuffer},
+    raw::{Storage, StorageWithCapacity, AllocResult},
     ArrayVec, GenericVec,
 };
 
-#[cfg(feature = "alloc")]
-use generic_vec::raw::Heap;
 #[cfg(feature = "alloc")]
 use std::alloc::{Allocator, Global};
 
@@ -21,7 +20,7 @@ use crate::{string_base::StringBase, OwnedString};
 /// assert_eq!(s, <&str>::from("foobar"));
 /// ```
 #[cfg(feature = "alloc")]
-pub type String<A = Global> = OwnedString<u8, Heap<u8, A>>;
+pub type String<A = Global> = OwnedString<Box<[MaybeUninit<u8>], A>>;
 
 /// Same API as [`String`] but without any re-allocation. Can only hold up to `N` bytes
 ///
@@ -37,7 +36,7 @@ pub type String<A = Global> = OwnedString<u8, Heap<u8, A>>;
 /// assert_eq!(t, <&str>::from("foo"));
 /// assert_eq!(s, <&str>::from("foobar"));
 /// ```
-pub type ArrayString<const N: usize> = OwnedString<u8, UninitBuffer<[u8; N], u8>>;
+pub type ArrayString<const N: usize> = OwnedString<[MaybeUninit<u8>; N]>;
 
 #[cfg(feature = "alloc")]
 impl String {
@@ -61,8 +60,8 @@ impl String {
     /// let s = String::new();
     /// ```
     #[inline]
-    pub const fn new() -> Self {
-        Self::with_storage(Heap::new())
+    pub fn new() -> Self {
+        Self::with_storage(Box::default())
     }
 
     /// Creates a new empty `String` with a particular capacity.
@@ -112,7 +111,7 @@ impl String {
 #[cfg(feature = "alloc")]
 impl<A: Allocator> String<A> {
     pub fn with_alloc(alloc: A) -> Self {
-        Self::with_storage(Heap::with_alloc(alloc))
+        Self::with_storage(Box::new_uninit_slice_in(0, alloc))
     }
 }
 
@@ -128,7 +127,7 @@ impl<const N: usize> ArrayString<N> {
     /// let s = ArrayString::<8>::new();
     /// ```
     #[inline]
-    pub const fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             storage: ArrayVec::new(),
         }
@@ -136,13 +135,13 @@ impl<const N: usize> ArrayString<N> {
 }
 
 #[derive(PartialEq, Eq)]
-pub struct FromUtf8Error<S: Storage<u8>> {
-    bytes: GenericVec<u8, S>,
+pub struct FromUtf8Error<S: Storage<Item = u8>> {
+    bytes: GenericVec<S>,
     error: Utf8Error,
 }
 
 use core::fmt;
-impl<S: Storage<u8>> fmt::Debug for FromUtf8Error<S> {
+impl<S: Storage<Item = u8>> fmt::Debug for FromUtf8Error<S> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("FromUtf8Error")
             .field("bytes", &self.bytes)
@@ -151,7 +150,7 @@ impl<S: Storage<u8>> fmt::Debug for FromUtf8Error<S> {
     }
 }
 
-impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
+impl<S: ?Sized + Storage<Item = u8>> OwnedString<S> {
     /// Converts a vector of bytes to a `String`.
     ///
     /// A string ([`String`]) is made of bytes ([`u8`]), and a vector of bytes
@@ -213,7 +212,7 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
     /// [`&str`]: prim@str
     /// [`into_bytes`]: StringBase::into_bytes
     #[inline]
-    pub fn from_utf8(vec: GenericVec<u8, S>) -> Result<Self, FromUtf8Error<S>>
+    pub fn from_utf8(vec: GenericVec<S>) -> Result<Self, FromUtf8Error<S>>
     where
         S: Sized,
     {
@@ -255,7 +254,7 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
     /// assert_eq!(sparkle_heart, <&str>::from("💖"));
     /// ```
     #[inline]
-    pub unsafe fn from_utf8_unchecked(vec: GenericVec<u8, S>) -> Self
+    pub unsafe fn from_utf8_unchecked(vec: GenericVec<S>) -> Self
     where
         S: Sized,
     {
@@ -277,7 +276,7 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
     /// assert_eq!(&[104, 101, 108, 108, 111][..], &bytes[..]);
     /// ```
     #[inline]
-    pub fn into_bytes(self) -> GenericVec<u8, S>
+    pub fn into_bytes(self) -> GenericVec<S>
     where
         S: Sized,
     {
@@ -391,7 +390,7 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
     ///
     /// If the capacity overflows, or the allocator reports a failure, then an error
     /// is returned.
-    pub fn try_reserve(&mut self, additional: usize) -> bool {
+    pub fn try_reserve(&mut self, additional: usize) -> AllocResult {
         self.storage.try_reserve(additional)
     }
     /// Appends the given [`char`] to the end of this `String`.
@@ -630,7 +629,7 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
     /// assert_eq!(s, <&str>::from("olleh"));
     /// ```
     #[inline]
-    pub unsafe fn as_mut_vec(&mut self) -> &mut GenericVec<u8, S> {
+    pub unsafe fn as_mut_vec(&mut self) -> &mut GenericVec<S> {
         &mut self.storage
     }
 
@@ -660,10 +659,10 @@ impl<S: ?Sized + Storage<u8>> OwnedString<u8, S> {
     /// ```
     #[inline]
     #[must_use = "use `.truncate()` if you don't need the other half"]
-    pub fn split_off<B: ?Sized + StorageWithCapacity<u8>>(
+    pub fn split_off<B: ?Sized + StorageWithCapacity<Item = u8>>(
         &mut self,
         at: usize,
-    ) -> StringBase<GenericVec<u8, B>> {
+    ) -> StringBase<GenericVec<B>> {
         assert!(self.is_char_boundary(at));
         let other = self.storage.split_off(at);
         unsafe { StringBase::from_utf8_unchecked(other) }
